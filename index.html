@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE-8 // THE TRUTH MACHINE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Righteous&family=Josefin+Slab:ital,wght@0,300;0,600;0,700;1,300;1,600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── NEW PALETTE: burnt orange / off-white / deep navy ── */
+  --bg:       #0b0c1a;
+  --bg2:      #111228;
+  --surface:  #1a1c35;
+  --burnt:    #e8621a;
+  --amber:    #f0a500;
+  --cream:    #f5f0e0;
+  --teal:     #00c9b1;
+  --navy:     #1e2a5e;
+  --offwhite: #ede8d8;
+  --muted:    rgba(245,240,224,0.4);
+  --faint:    rgba(245,240,224,0.12);
+  --scan:     rgba(245,240,224,0.018);
+
+  /* card interior */
+  --paper:    #fdfaf2;
+  --ink:      #1a1410;
+  --ink2:     #3d3530;
+  --ink3:     #7a7068;
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Share Tech Mono', monospace;
+  overflow-x: hidden;
+}
+
+/* CRT scanlines — subtle */
+body::before {
+  content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+  background: repeating-linear-gradient(0deg, var(--scan) 0px, var(--scan) 1px, transparent 1px, transparent 3px);
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:9998; pointer-events:none;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+}
+
+/* ── MARQUEES ── */
+.mq { width:100%; overflow:hidden; white-space:nowrap; position:relative; z-index:100; padding:7px 0; }
+.mq.top { background:var(--burnt); border-bottom:3px solid var(--amber); color:var(--cream); }
+.mq.bot { background:var(--navy);  border-top:3px solid var(--teal);     color:var(--cream); }
+.mq.mid { background:var(--amber); border-top:2px solid var(--burnt); border-bottom:2px solid var(--burnt); color:var(--bg); }
+
+.mqi { display:inline-block; font-family:'Boogaloo',cursive; font-size:20px; letter-spacing:2px; font-weight:400; }
+.mqi.f { animation:mf 28s linear infinite; }
+.mqi.r { animation:mr 34s linear infinite; }
+@keyframes mf { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+@keyframes mr { from{transform:translateX(-100%)} to{transform:translateX(100vw)} }
+
+/* ── MASTHEAD ── */
+.masthead {
+  background:var(--bg2);
+  border-bottom:2px solid rgba(232,98,26,0.4);
+  display:flex; align-items:stretch;
+  position:relative; z-index:100;
+}
+.mh-side {
+  padding:14px 18px; font-size:15px; line-height:2;
+  display:flex; flex-direction:column; justify-content:center; min-width:160px;
+  font-family:'Share Tech Mono',monospace;
+}
+.mh-side.l { border-right:1px solid var(--faint); color:var(--cream); }
+.mh-side.r { border-left:1px solid var(--faint); color:var(--cream); align-items:flex-end; text-align:right; }
+.mh-center { flex:1; text-align:center; padding:10px 12px 8px; }
+
+.mh-logo {
+  font-family:'Righteous', sans-serif;
+  font-size:clamp(36px,6vw,78px);
+  letter-spacing:4px; line-height:1;
+  color:var(--cream);
+  text-shadow: 4px 0 0 var(--burnt), -2px 0 0 var(--teal), 0 0 40px rgba(232,98,26,0.3);
+  animation:glitch 9s ease-in-out infinite;
+}
+@keyframes glitch {
+  0%,91%,100% { text-shadow:4px 0 0 var(--burnt),-2px 0 0 var(--teal),0 0 40px rgba(232,98,26,0.3); transform:none; }
+  92%  { text-shadow:-4px 0 0 var(--burnt),3px 0 0 var(--teal); transform:skewX(-1.5deg); }
+  93%  { text-shadow:4px 0 0 var(--teal),-2px 0 0 var(--burnt); transform:none; }
+}
+
+.mh-sub {
+  font-family:'Share Tech Mono',monospace; font-size:13px;
+  letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-top:5px;
+}
+.mh-rule { width:75%; height:1px; background:var(--faint); margin:6px auto 0; }
+
+.live-pip { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--burnt); box-shadow:0 0 8px var(--burnt); animation:pip 1s step-end infinite; }
+@keyframes pip { 50%{opacity:0} }
+
+/* ── NAV ── */
+.nav {
+  background:var(--surface); border-bottom:2px solid rgba(232,98,26,0.3);
+  display:flex; flex-wrap:wrap; position:relative; z-index:100;
+}
+.nav-a {
+  font-family:'Boogaloo',cursive; font-size:18px; letter-spacing:2px;
+  color:var(--cream); padding:9px 20px; cursor:pointer; text-transform:uppercase;
+  border-right:1px solid var(--faint); transition:background .12s, color .12s;
+}
+.nav-a:hover, .nav-a.on { background:var(--burnt); color:var(--cream); }
+.nav-a.alert { color:var(--amber); margin-left:auto; animation:alertblink 2s step-end infinite; font-size:18px; }
+@keyframes alertblink { 50%{opacity:0.5} }
+
+/* ── PAGE ── */
+.page {
+  max-width:1300px; margin:0 auto;
+  display:grid; grid-template-columns:220px 1fr 210px;
+  position:relative; z-index:10;
+}
+@media(max-width:860px){ .page{grid-template-columns:1fr} .lcol,.rcol{border:none;border-bottom:1px dashed rgba(232,98,26,0.3)} }
+
+/* ── LEFT ── */
+.lcol {
+  border-right:1px dashed rgba(232,98,26,0.25);
+  padding:12px 10px; display:flex; flex-direction:column; gap:12px;
+  background:repeating-linear-gradient(45deg,transparent,transparent 16px,rgba(232,98,26,0.015) 16px,rgba(232,98,26,0.015) 32px);
+}
+
+.wb { border:1px solid rgba(232,98,26,0.4); padding:10px 12px; }
+.wb.tl { border-color:rgba(0,201,177,0.4); }
+.wb.am { border-color:rgba(240,165,0,0.4); }
+.wb.wh { border-color:rgba(245,240,224,0.2); }
+
+.wt {
+  font-family:'Boogaloo',cursive; font-size:16px; letter-spacing:1.5px; text-transform:uppercase;
+  padding-bottom:6px; margin-bottom:8px; border-bottom:1px solid currentColor;
+}
+.wb { font-size:15px; line-height:1.8; color:var(--cream); }
+.wb.tl .wt { color:var(--teal); border-color:rgba(0,201,177,0.3); }
+.wb.am .wt { color:var(--amber); border-color:rgba(240,165,0,0.3); }
+.wb .wt { color:var(--burnt); border-color:rgba(232,98,26,0.3); }
+.wb.wh .wt { color:var(--offwhite); border-color:rgba(245,240,224,0.2); }
+
+.pbar-w { width:100%; height:9px; border:1px solid currentColor; margin-top:4px; overflow:hidden; }
+.pbar-f { height:100%; background:currentColor; }
+
+.ctr-big {
+  font-family:'Righteous',sans-serif; font-size:36px;
+  color:var(--amber); text-shadow:0 0 12px rgba(240,165,0,0.5);
+  text-align:center; display:block; padding:4px 0;
+}
+
+.flash {
+  text-align:center; padding:8px; font-size:15px; line-height:1.7;
+  animation:flash 2s step-end infinite;
+}
+@keyframes flash { 0%,100%{color:var(--burnt);border-color:var(--burnt)} 50%{color:var(--amber);border-color:var(--amber)} }
+
+.pdiv { text-align:center; font-size:14px; opacity:.25; letter-spacing:2px; color:var(--cream); }
+
+.cpill {
+  display:inline-block; font-size:15px; padding:2px 7px; cursor:pointer;
+  transition:background .1s;
+}
+.cpill:hover { background:var(--burnt); color:var(--cream); }
+
+/* ── CENTER ── */
+.ccol {
+  padding:20px 18px;
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+}
+
+/* ── THE BALL — hero element ── */
+.ball-hero {
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  width:100%;
+}
+
+.ball-outer-wrap {
+  position:relative;
+  width:min(380px, 80vw); height:min(380px, 80vw);
+  cursor:pointer;
+  flex-shrink:0;
+}
+
+/* pulsing ambient glow behind ball */
+.ball-glow {
+  position:absolute; inset:-30px; border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(232,98,26,0.22) 0%, transparent 65%);
+  animation:bglow 3.5s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes bglow { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.1);opacity:1} }
+
+/* orbit rings */
+.oring {
+  position:absolute; border-radius:50%; border-style:solid;
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  pointer-events:none;
+}
+.or1 { width:calc(100% + 20px); height:calc(100% + 20px); border-width:1.5px; border-color:rgba(232,98,26,0.2); animation:orot 7s linear infinite; }
+.or2 { width:calc(100% + 40px); height:calc(100% + 40px); border-width:1px;   border-color:rgba(0,201,177,0.12); animation:orot 13s linear infinite reverse; border-style:dashed; }
+.or3 { width:calc(100% + 60px); height:calc(100% + 60px); border-width:1px;   border-color:rgba(245,240,224,0.06); animation:orot 20s linear infinite; border-style:dotted; }
+@keyframes orot { to{transform:translate(-50%,-50%) rotate(360deg)} }
+
+/* dot accents on or1 */
+.or1::before, .or1::after {
+  content:''; position:absolute; width:7px; height:7px; border-radius:50%;
+  top:50%; left:-4px; transform:translateY(-50%);
+  background:var(--burnt); box-shadow:0 0 10px var(--burnt);
+}
+.or1::after { left:auto; right:-4px; background:var(--teal); box-shadow:0 0 10px var(--teal); }
+
+.ball-sphere {
+  width:100%; height:100%; border-radius:50%;
+  background: radial-gradient(circle at 33% 28%,
+    #2e1a08 0%, #180d04 45%, #0a0501 80%, #000 100%);
+  border:3px solid rgba(232,98,26,0.6);
+  box-shadow:
+    0 0 0 1px rgba(232,98,26,0.15),
+    0 20px 80px rgba(0,0,0,0.85),
+    0 0 60px rgba(232,98,26,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.ball-sphere:hover {
+  transform:scale(1.03);
+  box-shadow: 0 0 0 1px rgba(232,98,26,0.3), 0 24px 100px rgba(0,0,0,0.9), 0 0 80px rgba(232,98,26,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.ball-shine {
+  position:absolute;
+  top:10%; left:22%;
+  width:28%; height:15%;
+  background:radial-gradient(ellipse, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius:50%; transform:rotate(-35deg); pointer-events:none;
+}
+
+.ball-window {
+  width:43%; height:43%; border-radius:50%;
+  background:rgba(2,1,6,0.96);
+  border:2px solid rgba(232,98,26,0.35);
+  box-shadow:inset 0 0 20px rgba(232,98,26,0.08);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+}
+
+.ball-numeral {
+  font-family:'Righteous',sans-serif;
+  font-size:clamp(36px, 8vw, 72px);
+  line-height:1; color:var(--burnt);
+  text-shadow:0 0 20px rgba(232,98,26,0.8), 0 0 40px rgba(232,98,26,0.4);
+  transition:all .3s;
+}
+
+.ball-sublabel {
+  font-family:'Share Tech Mono',monospace; font-size:clamp(8px,1.5vw,11px);
+  letter-spacing:3px; text-transform:uppercase; color:rgba(232,98,26,0.4);
+}
+
+/* shake */
+.do-shake { animation:shk .55s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shk {
+  0%,100%{transform:rotate(0) scale(1)} 12%{transform:rotate(-10deg) scale(1.07)}
+  25%{transform:rotate(10deg) scale(1.07)} 38%{transform:rotate(-7deg) scale(1.04)}
+  50%{transform:rotate(7deg) scale(1.04)} 65%{transform:rotate(-4deg) scale(1.02)}
+  80%{transform:rotate(4deg) scale(1.02)}
+}
+
+/* shake button under the ball */
+.shake-btn {
+  font-family:'Boogaloo',cursive; font-size:20px; letter-spacing:2px;
+  background:var(--burnt); color:var(--cream); border:none;
+  padding:12px 48px; cursor:pointer;
+  box-shadow:5px 5px 0 var(--amber);
+  transition:transform .1s, box-shadow .1s;
+  text-transform:uppercase;
+}
+.shake-btn:hover { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--amber); }
+.shake-btn:active { transform:translate(5px,5px); box-shadow:none; }
+
+.ball-hint {
+  font-size:12px; letter-spacing:2px; color:var(--muted);
+  text-transform:uppercase; text-align:center;
+  animation:hpulse 3s ease-in-out infinite;
+}
+@keyframes hpulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
+
+
+/* ── HEADLINE OUTPUT — open editorial, no box ── */
+.headline-card {
+  width:100%; max-width:640px;
+  position:relative;
+  border-top:3px solid var(--burnt);
+  padding-top:4px;
+}
+.headline-card::before, .headline-card::after { display:none; }
+
+.card-bar {
+  background:transparent; color:var(--muted);
+  padding:6px 0 8px; display:flex; justify-content:space-between; align-items:center;
+  font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:1.5px;
+  border-bottom:1px solid var(--faint);
+  margin-bottom:0;
+}
+.card-dots { display:flex; gap:5px; }
+.cdot { width:9px; height:9px; border-radius:50%; }
+.cdot.r{background:#ff5f57} .cdot.y{background:#ffbd2e} .cdot.g{background:#28ca42}
+
+.card-body {
+  padding:20px 4px 16px;
+  min-height:160px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+
+.card-empty {
+  font-family:'Josefin Slab',serif; font-style:italic; font-size:17px;
+  color:var(--muted); text-align:center; line-height:2;
+}
+
+.card-loader {
+  display:flex; gap:8px; justify-content:center; padding:2.5rem 0;
+}
+.cld { width:11px; height:11px; border-radius:50%; animation:cla 1.1s ease-in-out infinite; }
+.cld:nth-child(1){background:var(--burnt);  animation-delay:0s}
+.cld:nth-child(2){background:var(--amber);  animation-delay:.2s}
+.cld:nth-child(3){background:var(--teal);   animation-delay:.4s}
+@keyframes cla { 0%,100%{transform:translateY(0) scale(.85);opacity:.4} 50%{transform:translateY(-9px) scale(1.1);opacity:1} }
+
+/* editorial content — dark background, light type */
+.n-kicker {
+  display:flex; align-items:center; gap:10px; margin-bottom:14px;
+}
+.n-kicker-rule { width:32px; height:2px; background:var(--burnt); flex-shrink:0; }
+.n-cat {
+  font-family:'Share Tech Mono',monospace; font-size:11px;
+  padding:4px 12px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--cream); border:1px solid currentColor;
+}
+.n-cat.tech          { color:var(--teal);  border-color:var(--teal); }
+.n-cat.politics      { color:var(--burnt); border-color:var(--burnt); }
+.n-cat.science       { color:var(--teal);  border-color:var(--teal); }
+.n-cat.entertainment { color:var(--amber); border-color:var(--amber); }
+.n-cat.sports        { color:var(--cream); border-color:var(--cream); }
+.n-cat.business      { color:var(--amber); border-color:var(--amber); }
+.n-cat.world         { color:var(--burnt); border-color:var(--burnt); }
+
+.n-headline {
+  font-family:'Josefin Slab',serif; font-weight:700;
+  font-size:clamp(26px, 3.5vw, 40px); line-height:1.15;
+  color:var(--cream); margin-bottom:14px; letter-spacing:-0.5px;
+}
+
+.n-rule {
+  width:100%; height:1px;
+  background:linear-gradient(90deg, var(--burnt) 0%, transparent 100%);
+  margin-bottom:14px;
+}
+
+.n-summary {
+  font-family:'Josefin Slab',serif; font-weight:300;
+  font-size:17px; line-height:1.85; color:var(--offwhite);
+}
+
+.n-byline {
+  margin-top:18px; padding-top:12px;
+  border-top:1px solid var(--faint);
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--muted);
+  letter-spacing:1px;
+}
+
+.fade-up { animation:fu .45s cubic-bezier(.22,1,.36,1) forwards; }
+@keyframes fu { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ── FEED ── */
+.feed {
+  width:100%; max-width:640px;
+  border-top:2px solid rgba(232,98,26,0.4);
+}
+.feed-hd {
+  background:transparent; border-bottom:1px solid var(--faint);
+  padding:6px 0; font-family:'Share Tech Mono',monospace; font-size:13px; letter-spacing:1.5px;
+  display:flex; justify-content:space-between; color:var(--muted);
+}
+.feed-scroll { max-height:200px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--burnt) transparent; }
+
+.fi {
+  padding:10px 0; border-bottom:1px solid var(--faint);
+  cursor:pointer; transition:padding-left .15s;
+}
+.fi:last-child { border-bottom:none; }
+.fi:hover { padding-left:8px; }
+
+.fi-cat { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+.fi-hl  { font-family:'Josefin Slab',serif; font-size:15px; font-weight:600; color:var(--offwhite); line-height:1.4; margin-bottom:3px; }
+.fi-tm  { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); }
+.feed-empty { padding:16px 0; font-family:'Josefin Slab',serif; font-size:15px; color:var(--muted); text-align:center; font-style:italic; }
+
+/* ── RIGHT ── */
+.rcol {
+  border-left:1px dashed rgba(232,98,26,0.25);
+  padding:12px 10px; display:flex; flex-direction:column; gap:12px;
+}
+
+.ascii {
+  font-family:'Share Tech Mono',monospace; font-size:11px; line-height:1.3;
+  white-space:pre; text-align:center; color:var(--burnt); opacity:.4;
+}
+
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.stat-cell { border:1px solid rgba(232,98,26,0.3); padding:7px 4px; text-align:center; }
+.sv { font-family:'Righteous',sans-serif; font-size:26px; color:var(--amber); display:block; }
+.sl { font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; display:block; margin-top:2px; }
+
+.hit-ctr { border:1px solid rgba(232,98,26,0.3); background:var(--surface); padding:9px; text-align:center; font-size:14px; letter-spacing:1px; color:var(--muted); }
+.hit-num { font-family:'Righteous',sans-serif; font-size:24px; color:var(--amber); display:block; margin-top:4px; letter-spacing:3px; }
+
+.uc { border:1.5px dashed rgba(240,165,0,0.5); padding:9px; text-align:center; font-size:15px; color:var(--amber); line-height:1.8; animation:ucf 2.5s step-end infinite; }
+@keyframes ucf { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.gbook { font-size:14px; line-height:1.7; }
+.gb { padding:6px 0; border-bottom:1px solid var(--faint); color:var(--muted); }
+.gb:last-child { border-bottom:none; }
+.gb-n { color:var(--teal); font-size:15px; }
+
+.disc { font-size:13px; color:rgba(232,98,26,0.6); line-height:1.8; border:1px solid rgba(232,98,26,0.2); padding:9px; }
+
+/* ── INNER PAGES ── */
+.inner-page {
+  display: none;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 2rem 2rem;
+  position: relative;
+  z-index: 10;
+}
+.inner-page.active { display: block; }
+
+.ip-header {
+  border-bottom: 3px solid var(--burnt);
+  padding-bottom: 10px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.ip-title {
+  font-family: 'Righteous', sans-serif;
+  font-size: clamp(28px, 4vw, 48px);
+  letter-spacing: 3px;
+  color: var(--cream);
+  text-shadow: 3px 0 0 var(--burnt);
+}
+.ip-sub {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* HEADLINES PAGE */
+.hl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+.hl-card {
+  border-top: 2px solid var(--burnt);
+  padding: 1rem 0 1.25rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.hl-card:hover { border-color: var(--amber); }
+.hl-card-cat {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: 'Share Tech Mono', monospace;
+}
+.hl-card-headline {
+  font-family: 'Josefin Slab', serif;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+.hl-card-summary {
+  font-family: 'Josefin Slab', serif;
+  font-weight: 300;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* ARCHIVE PAGE */
+.archive-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+.af-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border: 1px solid rgba(232,98,26,0.4);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.af-btn:hover, .af-btn.active {
+  background: var(--burnt);
+  color: var(--cream);
+  border-color: var(--burnt);
+}
+.archive-list { display: flex; flex-direction: column; gap: 0; }
+.archive-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--faint);
+  cursor: pointer;
+  transition: padding-left 0.15s;
+}
+.archive-row:hover { padding-left: 10px; }
+.ar-cat {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  width: 90px;
+}
+.ar-hl {
+  font-family: 'Josefin Slab', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--offwhite);
+  line-height: 1.4;
+  flex: 1;
+}
+.ar-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--faint);
+  flex-shrink: 0;
+}
+
+/* ABOUT PAGE */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+@media(max-width:700px){ .about-grid { grid-template-columns: 1fr; } }
+.about-block {
+  border-top: 2px solid var(--burnt);
+  padding-top: 1rem;
+}
+.about-block h3 {
+  font-family: 'Righteous', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--amber);
+  margin-bottom: 0.75rem;
+}
+.about-block p {
+  font-family: 'Josefin Slab', serif;
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--offwhite);
+  margin-bottom: 0.75rem;
+}
+.about-block p:last-child { margin-bottom: 0; }
+.about-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--faint);
+  font-size: 14px;
+}
+.about-stat-row:last-child { border-bottom: none; }
+.asr-label { color: var(--muted); font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.asr-val { font-family: 'Righteous', sans-serif; font-size: 20px; color: var(--amber); }
+
+/* GUESTBOOK PAGE */
+.gb-entries { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+.gb-entry {
+  border: 1px solid rgba(232,98,26,0.25);
+  padding: 1rem 1.25rem;
+  background: rgba(232,98,26,0.03);
+}
+.gb-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.gb-entry-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: var(--teal);
+  letter-spacing: 1px;
+}
+.gb-entry-date {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--faint);
+}
+.gb-entry-msg {
+  font-family: 'Josefin Slab', serif;
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--offwhite);
+}
+.gb-form-title {
+  font-family: 'Righteous', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--amber);
+  margin-bottom: 1rem;
+  border-top: 2px solid var(--burnt);
+  padding-top: 1rem;
+}
+.gb-form { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.gb-input, .gb-textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232,98,26,0.3);
+  color: var(--cream);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.gb-input:focus, .gb-textarea:focus { border-color: var(--burnt); }
+.gb-textarea { min-height: 90px; resize: vertical; }
+.gb-submit {
+  font-family: 'Boogaloo', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  background: var(--burnt);
+  color: var(--cream);
+  border: none;
+  padding: 10px 28px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--amber);
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+.gb-submit:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--amber); }
+.gb-submit:active { transform: translate(4px,4px); box-shadow: none; }
+
+/* archive search */
+.archive-search {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232,98,26,0.3);
+  color: var(--cream);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  padding: 8px 14px;
+  outline: none;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.15s;
+}
+.archive-search:focus { border-color: var(--burnt); }
+::placeholder { color: var(--muted); }
+
+.footer {
+  border-top:2px solid rgba(232,98,26,0.3); background:var(--bg2);
+  padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;
+  position:relative; z-index:100;
+}
+.footer-logo { font-family:'Righteous',sans-serif; font-size:22px; letter-spacing:3px; color:var(--burnt); text-shadow:2px 0 0 var(--teal); }
+.footer-txt  { font-size:11px; color:var(--muted); }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg2); }
+::-webkit-scrollbar-thumb { background:var(--burnt); }
+
+/* ── SIDEBAR IMAGES ── */
+.sb-img-wrap {
+  border:2px solid rgba(232,98,26,0.4);
+  position:relative; overflow:hidden;
+  background:var(--surface);
+}
+.sb-img-wrap img {
+  width:100%; display:block;
+  filter:sepia(0.3) contrast(1.05) brightness(0.9);
+  transition:filter .3s;
+}
+.sb-img-wrap:hover img { filter:sepia(0) contrast(1.1) brightness(1); }
+.sb-img-cap {
+  background:rgba(0,0,0,0.75); color:var(--muted);
+  font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+  padding:4px 8px; text-align:center; border-top:1px solid rgba(232,98,26,0.3);
+}
+.sb-img-wrap.teal-border { border-color:rgba(0,201,177,0.4); }
+.sb-img-wrap.teal-border .sb-img-cap { border-top-color:rgba(0,201,177,0.3); }
+
+/* glitch effect on hover */
+.sb-img-wrap::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(232,98,26,0.03) 0px,rgba(232,98,26,0.03) 1px,transparent 1px,transparent 4px);
+}
+</style>
+</head>
+<body>
+
+<!-- TOP MARQUEE -->
+<div class="mq top" aria-hidden="true">
+  <span class="mqi f">⚠ BREAKING ⚠ &nbsp; THE INTERNET IS 97.3% BOTS &nbsp; ⚠ BREAKING ⚠ &nbsp; BAUDRILLARD WAS RIGHT &nbsp; ⚠ BREAKING ⚠ &nbsp; SIMULATION STATUS: UNVERIFIED &nbsp; ⚠ BREAKING ⚠ &nbsp; YOUR NEWS FEED IS A DARK FOREST &nbsp; ⚠ BREAKING ⚠ &nbsp; AI GENERATED THIS HEADLINE &nbsp; ⚠ BREAKING ⚠ &nbsp; PRESS F TO PAY RESPECTS TO TRUTH &nbsp; ⚠</span>
+</div>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="mh-side l">
+    <div>TIME: <span id="clock" style="color:var(--teal);font-size:17px">--:--:--</span></div>
+    <div>STATUS: <span style="color:var(--teal)">ONLINE</span></div>
+    <div>SIGNAL: <span style="color:var(--amber)">██████░░</span></div>
+  </div>
+  <div class="mh-center">
+    <div class="mh-logo">ORACLE-8</div>
+    <div class="mh-sub">Dark Forest Intelligence Bureau // Est. 2025</div>
+    <div class="mh-rule"></div>
+  </div>
+  <div class="mh-side r">
+    <div><span class="live-pip"></span> <span style="color:var(--burnt);font-size:16px">LIVE</span></div>
+    <div>VISITORS: <span style="color:var(--amber);font-size:17px" id="visCount">004,891</span></div>
+    <div id="hdate" style="font-size:14px;color:var(--cream)"></div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-a on" onclick="showPage('home')">HOME</div>
+  <div class="nav-a" onclick="showPage('headlines')">HEADLINES</div>
+  <div class="nav-a" onclick="showPage('archive')">ARCHIVE</div>
+  <div class="nav-a" onclick="showPage('about')">ABOUT</div>
+  <div class="nav-a" onclick="showPage('guestbook')">GUESTBOOK</div>
+  <div class="nav-a alert">!! ALERTS !!</div>
+</nav>
+
+<!-- MID MARQUEE -->
+<div class="mq mid" aria-hidden="true">
+  <span class="mqi r">🌐 WORLD &nbsp; 💻 TECH &nbsp; 🧬 SCIENCE &nbsp; 🎭 ENTERTAINMENT &nbsp; 🏆 SPORTS &nbsp; 📈 BUSINESS &nbsp; 🏛 POLITICS &nbsp; 👁 DARK FOREST INTEL &nbsp; 🤖 BOT DISPATCHES &nbsp; 🌐 WORLD &nbsp; 💻 TECH &nbsp; 🧬 SCIENCE</span>
+</div>
+
+<!-- PAGE GRID -->
+<div class="page">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="lcol">
+    <div class="wb">
+      <div class="wt">!! Alert !!</div>
+      <div class="flash" style="border:1px solid;font-size:12px;line-height:1.7">WARNING:<br>97% OF<br>HEADLINES<br>ARE BOTS</div>
+    </div>
+
+    <div class="wb am">
+      <div class="wt">Oracle Power</div>
+      <div style="color:var(--muted);font-size:12px">TRUTH LVL:</div>
+      <div class="pbar-w" style="border-color:var(--teal)"><div class="pbar-f" style="background:var(--teal);width:68%;animation:pb 4s ease-in-out infinite alternate"></div></div>
+      <div style="color:var(--muted);font-size:12px;margin-top:5px">BOT DENSITY:</div>
+      <div class="pbar-w" style="border-color:var(--burnt)"><div class="pbar-f" style="background:var(--burnt);width:88%"></div></div>
+    </div>
+
+    <div class="wb tl">
+      <div class="wt">Shakes</div>
+      <span class="ctr-big" id="shakeCounter">000</span>
+    </div>
+
+    <div class="pdiv">░░░░░░░░░░</div>
+
+    <div class="wb">
+      <div class="wt">Categories</div>
+      <span class="cpill" style="color:var(--teal)">[ TECH ]</span>
+      <span class="cpill" style="color:var(--burnt)">[ POLITICS ]</span>
+      <span class="cpill" style="color:var(--teal)">[ SCIENCE ]</span>
+      <span class="cpill" style="color:var(--amber)">[ ENTERTAIN ]</span>
+      <span class="cpill" style="color:var(--cream)">[ SPORTS ]</span>
+      <span class="cpill" style="color:var(--amber)">[ BUSINESS ]</span>
+      <span class="cpill" style="color:var(--burnt)">[ WORLD ]</span>
+    </div>
+
+    <!-- magic 8 ball styled panel -->
+    <div class="sb-img-wrap">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Magic_8_Ball_-_Hasbro_-_2012_%281%29.jpg/320px-Magic_8_Ball_-_Hasbro_-_2012_%281%29.jpg" alt="Magic 8 Ball" loading="lazy" onerror="this.parentNode.querySelector('.fallback').style.display='flex';this.style.display='none'">
+      <div class="fallback" style="display:none;background:radial-gradient(circle at 40% 35%,#1a0030,#000);padding:28px 10px;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+        <div style="font-size:56px">🎱</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(232,98,26,0.6);letter-spacing:2px">ORIGINAL ORACLE</div>
+      </div>
+      <div class="sb-img-cap">// ORACLE ANCESTOR //</div>
+    </div>
+
+    <div class="pdiv">░░░░░░░░░░</div>
+
+    <!-- newspaper styled panel -->
+    <div class="sb-img-wrap">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Newspaper.jpg/320px-Newspaper.jpg" alt="Old Newspapers" loading="lazy" onerror="this.parentNode.querySelector('.fallback').style.display='flex';this.style.display='none'">
+      <div class="fallback" style="display:none;background:linear-gradient(135deg,#1a1408,#0a0a0a);padding:24px 10px;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+        <div style="font-size:44px">📰</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:1.5px;text-align:center">PRE-SIMULATION<br>MEDIA</div>
+      </div>
+      <div class="sb-img-cap">// PRE-SIMULATION NEWS //</div>
+    </div>
+
+    <div class="pdiv">░░░░░░░░░░</div>
+
+    <div class="wb wh">
+      <div class="wt">Dark Forest Index</div>
+      <div style="font-size:15px;line-height:2;color:var(--muted)">
+        BOT ACTIVITY:<br><span style="color:var(--burnt)">CRITICAL</span><br>
+        REAL HUMANS:<br><span style="color:var(--teal)">~3% EST.</span><br>
+        SIMULATION:<br><span style="color:var(--amber)">UNCONFIRMED</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER -->
+  <main class="ccol">
+
+    <!-- THE BALL — hero -->
+    <div class="ball-hero">
+      <div class="ball-outer-wrap" id="ballWrap" onclick="doShake()" role="button" tabindex="0" aria-label="Shake the oracle for news">
+        <div class="ball-glow"></div>
+        <div class="oring or1"></div>
+        <div class="oring or2"></div>
+        <div class="oring or3"></div>
+        <div class="ball-sphere" id="ballSphere">
+          <div class="ball-shine"></div>
+          <div class="ball-window">
+            <div class="ball-numeral" id="ballNum">8</div>
+            <div class="ball-sublabel" id="ballLbl">ORACLE</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="shake-btn" onclick="doShake()">▶ Shake for News ◀</button>
+      <div class="ball-hint">// click the orb or button to receive a dispatch //</div>
+    </div>
+
+    <!-- HEADLINE CARD -->
+    <div class="headline-card" id="headlineCard">
+      <div class="card-bar">
+        <div class="card-dots"><div class="cdot r"></div><div class="cdot y"></div><div class="cdot g"></div></div>
+        <span>ORACLE-8 :: TRUTH TERMINAL :: OUTPUT STREAM</span>
+        <span id="termStatus">STANDBY</span>
+      </div>
+      <div class="card-body" id="cardBody">
+        <div class="card-empty">
+          "Shake the oracle to receive a dispatch from the dark forest.<br>
+          All futures are uncertain. One of them is probably a bot."
+        </div>
+      </div>
+    </div>
+
+    <!-- FEED -->
+    <div class="feed">
+      <div class="feed-hd">
+        <span>📡 RECENT DISPATCHES</span>
+        <span id="feedCount" style="color:var(--muted)">[ 0 ENTRIES ]</span>
+      </div>
+      <div class="feed-scroll" id="feedScroll">
+        <div class="feed-empty">// no dispatches yet. the oracle awaits. //</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside class="rcol">
+    <!-- styled bot unit card -->
+    <div class="sb-img-wrap teal-border">
+      <div style="background:linear-gradient(135deg,#060f1a 0%,#0f0620 100%);padding:24px 10px;text-align:center;">
+        <div style="font-size:52px;line-height:1">🤖</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--teal);letter-spacing:2px;margin-top:8px">UNIT CLASS: BOT</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px">STATUS: ACTIVE</div>
+      </div>
+      <div class="sb-img-cap" style="border-top-color:rgba(0,201,177,0.3)">// DARK FOREST AGENT //</div>
+    </div>
+
+    <div class="wb tl">
+      <div class="wt">Live Stats</div>
+      <div class="stat-grid">
+        <div class="stat-cell"><span class="sv" id="sShakes">0</span><span class="sl">shakes</span></div>
+        <div class="stat-cell"><span class="sv" id="sHeads">0</span><span class="sl">stories</span></div>
+        <div class="stat-cell"><span class="sv">0%</span><span class="sl">accurate</span></div>
+        <div class="stat-cell"><span class="sv" style="color:var(--burnt)">∞</span><span class="sl">bots</span></div>
+      </div>
+    </div>
+
+    <div class="hit-ctr">
+      SITE VISITORS
+      <span class="hit-num" id="hitNum">004891</span>
+    </div>
+
+    <div class="uc">⚠ UNDER<br>CONSTRUCTION ⚠<br><span style="font-size:10px">[ CHECK BACK LATER ]</span></div>
+
+    <div class="wb">
+      <div class="wt">Guestbook</div>
+      <div class="gbook">
+        <div class="gb"><span class="gb-n">xX_TruthSeeker99:</span><br>"this changed my life"</div>
+        <div class="gb"><span class="gb-n">bot_4892:</span><br>"[ERROR: COMMENT NULL]"</div>
+        <div class="gb"><span class="gb-n">definitely_human:</span><br>"totally real comment"</div>
+        <div class="gb"><span class="gb-n">null_pointer:</span><br>"asking for a bot"</div>
+      </div>
+    </div>
+
+    <div class="disc">⚠ All stories AI-generated. Resemblance to reality is a simulation artifact. The dark forest is everywhere. You are probably a bot.</div>
+
+    <!-- surveillance eye -->
+    <div class="sb-img-wrap">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Secure_beneath_the_watchful_eyes.jpg/320px-Secure_beneath_the_watchful_eyes.jpg" alt="Surveillance Poster" loading="lazy" onerror="this.parentNode.querySelector('.fallback').style.display='flex';this.style.display='none'">
+      <div class="fallback" style="display:none;background:linear-gradient(180deg,#0a0010,#1a000a);padding:28px 10px;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+        <div style="font-size:52px">👁</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(232,98,26,0.7);letter-spacing:2px;text-align:center">WE ARE<br>WATCHING</div>
+      </div>
+      <div class="sb-img-cap">// WE ARE WATCHING //</div>
+    </div>
+
+    <div class="wb wh" style="font-size:15px;line-height:2;color:var(--muted)">
+      <div class="wt">Best Viewed In</div>
+      Netscape 4.0<br>800×600 px<br>256 colors<br>Reality: OPTIONAL
+    </div>
+  </aside>
+
+</div>
+
+<!-- HEADLINES PAGE -->
+<div class="inner-page" id="page-headlines">
+  <div class="ip-header">
+    <div class="ip-title">HEADLINES</div>
+    <div class="ip-sub">// All <span id="hl-count">0</span> dispatches from the dark forest</div>
+  </div>
+  <div class="hl-grid" id="hlGrid"></div>
+</div>
+
+<!-- ARCHIVE PAGE -->
+<div class="inner-page" id="page-archive">
+  <div class="ip-header">
+    <div class="ip-title">ARCHIVE</div>
+    <div class="ip-sub">// Browse by category</div>
+  </div>
+  <div class="archive-filters" id="archiveFilters">
+    <button class="af-btn active" onclick="filterArchive('all',this)">ALL</button>
+    <button class="af-btn" onclick="filterArchive('tech',this)">💻 TECH</button>
+    <button class="af-btn" onclick="filterArchive('science',this)">🧬 SCIENCE</button>
+    <button class="af-btn" onclick="filterArchive('politics',this)">🏛 POLITICS</button>
+    <button class="af-btn" onclick="filterArchive('business',this)">📈 BUSINESS</button>
+    <button class="af-btn" onclick="filterArchive('entertainment',this)">🎭 ENTERTAINMENT</button>
+    <button class="af-btn" onclick="filterArchive('sports',this)">🏆 SPORTS</button>
+    <button class="af-btn" onclick="filterArchive('world',this)">🌐 WORLD</button>
+  </div>
+  <input class="archive-search" id="archiveSearch" placeholder="Search dispatches..." oninput="searchArchive(this.value)">
+  <div class="archive-list" id="archiveList"></div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div class="inner-page" id="page-about">
+  <div class="ip-header">
+    <div class="ip-title">ABOUT</div>
+    <div class="ip-sub">// What is this, exactly</div>
+  </div>
+  <div class="about-grid">
+    <div class="about-block">
+      <h3>THE ORACLE</h3>
+      <p>ORACLE-8 is a satirical news dispensary operating from within the dark forest of the contemporary internet — a space so saturated with automated agents, synthetic content, and bot-generated signal that authentic information has become statistically unlikely.</p>
+      <p>Every headline dispensed by this machine is entirely fictional. Any resemblance to real events is a simulation artifact. The oracle does not lie. It simply does what the media apparatus does, faster and without pretense.</p>
+      <p>Shake the ball. Receive a dispatch. Question everything, including this sentence.</p>
+    </div>
+    <div class="about-block">
+      <h3>THE THEORY</h3>
+      <p>This project draws on Jean Baudrillard's theory of simulation — the idea that contemporary media no longer represents reality but precedes and produces it. The generated headlines are not parodies of real news. They are structurally indistinguishable from it.</p>
+      <p>It also engages Yancey Strickler's Dark Forest Theory of the Internet: the web as a graveyard full of signals that simulate life without containing it. ORACLE-8 literalizes this condition — the joke and the critique are the same gesture.</p>
+    </div>
+    <div class="about-block">
+      <h3>THE ARCHIVE</h3>
+      <div class="about-stat-row"><span class="asr-label">Total Dispatches</span><span class="asr-val" id="about-total">0</span></div>
+      <div class="about-stat-row"><span class="asr-label">Categories</span><span class="asr-val">7</span></div>
+      <div class="about-stat-row"><span class="asr-label">Accuracy Rating</span><span class="asr-val">0%</span></div>
+      <div class="about-stat-row"><span class="asr-label">Reality Rating</span><span class="asr-val">0/10</span></div>
+      <div class="about-stat-row"><span class="asr-label">Bot Density</span><span class="asr-val" style="color:var(--burnt)">∞</span></div>
+    </div>
+    <div class="about-block">
+      <h3>DISCLAIMER</h3>
+      <p>All stories are AI-generated and entirely fictional. None of the events, people, studies, statistics, organisations, or countries described herein are real, unless they coincidentally are, which would be concerning.</p>
+      <p>ORACLE-8 accepts no responsibility for reality confusion, existential dread, misplaced citations, or the specific anxiety of not being able to tell if something is satire anymore.</p>
+      <p style="color:var(--muted);font-size:13px">Est. 2025 · Dark Forest Intelligence Bureau · All truths simulated</p>
+    </div>
+  </div>
+</div>
+
+<!-- GUESTBOOK PAGE -->
+<div class="inner-page" id="page-guestbook">
+  <div class="ip-header">
+    <div class="ip-title">GUESTBOOK</div>
+    <div class="ip-sub">// Leave a message. We cannot verify you are human.</div>
+  </div>
+  <div class="gb-entries" id="gbEntries"></div>
+  <div class="gb-form-title">SIGN THE GUESTBOOK</div>
+  <div class="gb-form">
+    <input class="gb-input" id="gbName" placeholder="Your name (or alias)">
+    <input class="gb-input" id="gbLocation" placeholder="Location (optional)">
+    <textarea class="gb-textarea" id="gbMsg" placeholder="Leave a message for the oracle..."></textarea>
+    <button class="gb-submit" onclick="submitGuestbook()">POST ENTRY ▶</button>
+  </div>
+</div>
+
+
+<div class="mq bot" aria-hidden="true">
+  <span class="mqi f">© 2026 ORACLE-8 DARK FOREST INTELLIGENCE BUREAU &nbsp;✦&nbsp; ALL STORIES INVENTED &nbsp;✦&nbsp; BAUDRILLARD TOLD YOU SO &nbsp;✦&nbsp; THE MAP IS NOT THE TERRITORY &nbsp;✦&nbsp; THE TERRITORY IS NOT REAL EITHER &nbsp;✦&nbsp; REALITY: OPTIONAL &nbsp;✦&nbsp; 97% BOT-FREE* (*NOT VERIFIED) &nbsp;✦</span>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-txt">ORACLE-8 v2.0.1 :: SYS STATUS: NOMINAL</div>
+  <div class="footer-logo">ORACLE-8</div>
+  <div class="footer-txt">DARK FOREST INTEL © 2026</div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DISPATCHES — add your headlines here
+// ═══════════════════════════════════════════════
+const DISPATCHES = [
+  { category:"tech", headline:"Scientists Confirm WiFi Router Achieved Sentience, Demands Password Respect", summary:"A suburban Netgear router in Akron, Ohio has begun refusing connections to devices it finds 'spiritually incompatible.' Researchers say it is the first documented case of firmware achieving what they're calling 'boundary consciousness.'" },
+  { category:"world", headline:"Finland Accidentally Invents New Emotion, Cannot Explain It", summary:"Linguists confirm a previously undocumented feeling described as 'the specific melancholy of watching a stranger's shopping cart roll slowly into traffic.' The Finnish government has applied for international emotional copyright." },
+  { category:"science", headline:"Researchers Confirm Pigeons Have Been Lying About Navigation This Whole Time", summary:"A landmark study reveals urban pigeons have GPS chips installed by Big Seed since 1987. The birds, reached for comment, flew away suspiciously fast." },
+  { category:"politics", headline:"Congress Passes Bill Requiring All Laws to Rhyme", summary:"In a landmark 312-4 vote, legislators approved the Poetic Governance Act, effective immediately. Early drafts of the tax code have been described as 'surprisingly moving' and 'almost musical.'" },
+  { category:"business", headline:"Amazon Introduces New Delivery Option: Emotional Support", summary:"Prime members can now select 'Empathetic Arrival,' in which a driver sits with your package for up to 20 minutes discussing whether you actually need what you ordered. Conversion rates have dropped 40%. Satisfaction scores are through the roof." },
+  { category:"entertainment", headline:"Hollywood Announces Remake of Reality, Original Deemed Too Niche", summary:"Major studios confirmed a $4 billion reboot of consensus reality, citing poor engagement metrics and an increasingly unsatisfying third act. The new version will feature more legible subtitles and a clearer villain." },
+  { category:"sports", headline:"Olympic Committee Adds Competitive Sitting as Official Discipline", summary:"After years of lobbying, Sustained Seated Presence debuts at next year's games. Early favorite Gerhard Mueller of Austria has not moved in eleven months and is described by coaches as frighteningly coachable." },
+  { category:"world", headline:"Switzerland Declares Itself Fictional, Cites Lack of Narrative Tension", summary:"In a surprise referendum, Swiss voters approved a resolution stating the country is too stable to be real. Tourism officials say interest has spiked 800% since the announcement." },
+  { category:"science", headline:"New Study Finds Most Users Scroll Past Articles They Later Claim to Have Read", summary:"A peer-reviewed report from MIT confirms 94% of cited articles were opened, skimmed for two seconds, and closed. The study itself has already been cited 340 times by people who have not read it." },
+  { category:"entertainment", headline:"Streaming Platform Tests Feature That Rewrites Endings Based on Viewer Mood", summary:"Beta users of MoodFlix report that during a depressive episode, all films now end with the main character buying a reasonable used car and starting therapy. Reviewers call it disturbingly accurate." },
+  { category:"business", headline:"Major Airline Introduces Standing Class for Short-Haul Flights", summary:"VertAir's new StandSpace cabin fits 340 passengers in what the CEO describes as a dignified lean. Passengers are secured via padded shoulder harness and complimentary grip socks. Load times have improved by 60%. Morale has not." },
+  { category:"sports", headline:"New Fitness Trend Tracks Calories Burned While Waiting", summary:"The WaitFit app, now with 4 million users, counts passive caloric expenditure during queues, hold music, and existential pauses. Power users report burning up to 11 calories during a single DMV visit." },
+  { category:"tech", headline:"App Promises to Summarise Your Emails Before You Send Them to Yourself", summary:"InboxMirror, backed by $40 million in venture funding, auto-summarises draft emails so users can decide if the thought was worth having. Beta testers report a 91% reduction in sent mail and a profound sense of relief." },
+  { category:"world", headline:"Japan Introduces Official Certification for People Who Are Fine", summary:"The Ministry of Wellness has launched the Fine Certificate, a government-issued document confirming the bearer is managing. Demand has outpaced supply by 400%. The waiting list is described as long but fine." },
+  { category:"science", headline:"Scientists Discover the Brain Has a Tab It Never Closes", summary:"Neurologists at Cambridge have identified a cortical region responsible for replaying a mildly embarrassing moment from 2007 on a 48-hour loop. The region, dubbed the Cringe Cortex, appears to be immune to sleep." },
+  { category:"business", headline:"Consultancy Charges Clients to Explain What They Already Know", summary:"McKinsey spinoff MirrorBridge has launched a premium service in which a senior partner listens to your problem for 90 minutes and repeats it back using different fonts. Q1 revenue exceeded forecasts by 300%." },
+  { category:"politics", headline:"City Council Votes to Make Eye Contact Optional Downtown", summary:"Following a contentious 6-3 vote, residents of Portland, Oregon may now legally avert their gaze in all commercial and civic spaces. Proponents call it a long overdue recognition of urban emotional bandwidth." },
+  { category:"entertainment", headline:"True Crime Podcast Solves Crime, Immediately Pivots to New Crime", summary:"After conclusively identifying the Lakewood County Butter Thief in episode 4, the Guilty Spread team announced a season 2 pivot to an unrelated 1994 scone disappearance. Listeners described the transition as seamless." },
+  { category:"world", headline:"Denmark Quietly Becomes Best at Everything, Declines to Mention It", summary:"For the ninth consecutive year, Denmark has topped global rankings in happiness, infrastructure, pastry, and emotional regulation. Officials issued a brief statement describing the achievement as nice, we suppose." },
+  { category:"tech", headline:"New App Tells You How You Would Have Felt If Things Had Gone Differently", summary:"CounterfactualMe uses AI to simulate alternate emotional timelines based on decisions you did not make. Most users report their alternate selves are doing okay, actually, which has been clinically shown to make things worse." },
+  { category:"science", headline:"Caffeine Found to Temporarily Replace Personality in 80% of Adults", summary:"A Johns Hopkins study confirms that for 38 minutes after consumption, coffee provides users with opinions, confidence, and a functional sense of self. Researchers note the effect is not permanent but describe it as good enough." },
+  { category:"business", headline:"Remote Work Study Finds Most Productive Hour Is the One Nobody Schedules", summary:"A two-year Stanford study identified 11:17am on Tuesdays as the single most productive window in the modern workday. It is currently being filled by a recurring all-hands." },
+  { category:"entertainment", headline:"Man Finishes Book, Immediately Forgets Everything Except Vague Feeling", summary:"Darren Hobbs of Swindon completed Middlemarch on Sunday and reports retaining only a general sense of weight and the word provincial. He has since recommended it to four people." },
+  { category:"tech", headline:"Social Media Algorithm Begins Recommending Users Take a Walk", summary:"In an unexpected update, Instagram's recommendation engine has started surfacing posts of open sky, empty benches, and gentle rain. Engineers say the model converged on something we did not expect and have declined to roll it back." },
+  { category:"tech", headline:"Keyboard Manufacturer Adds Guilt Key for Easier Apology Drafting", summary:"MechSoft's new G-Series keyboard ships with a dedicated Guilt key that auto-populates I should have replied sooner into any open draft. Sales have exceeded projections by 600% in the HR sector." },
+  { category:"tech", headline:"Phone Battery Anxiety Now Classified as Distinct Medical Condition", summary:"The WHO has formally recognised Low Battery Dread as a diagnosable anxiety disorder, citing its unique symptom profile: sweating below 20%, tunnel vision below 10%, and full dissociation at 5%." },
+  { category:"tech", headline:"Tech CEO Announces Product Nobody Asked For With Tears in Eyes", summary:"At a sold-out keynote, Nexus founder Dale Pryor unveiled the Ambient Regret Engine, a device that plays sad piano music based on your search history. He described it as the most personal thing I have ever built." },
+  { category:"tech", headline:"AI Trained Entirely on Apology Emails Now Just Says Sorry Constantly", summary:"Researchers at DeepBridge report their latest language model, trained on 40 million corporate apology emails, responds to every query with a variation of We deeply regret any inconvenience this may have caused." },
+  { category:"tech", headline:"New Smartwatch Feature Tells You Exactly How Long You Have Been Avoiding Something", summary:"AvoidTrack, now in beta, monitors physiological stress markers and cross-references them with your calendar to calculate precise avoidance duration. Most users have been avoiding the gym for an average of 11 weeks." },
+  { category:"tech", headline:"Startup Claims App Can Tell if You Actually Like Someone or Just Like Their Attention", summary:"AttachmentAI has raised $60 million on the promise of distinguishing genuine affection from validation-seeking using typing speed, emoji frequency, and the vibe of your read receipts." },
+  { category:"tech", headline:"Man Spends Four Hours Optimising System That Saves Him Four Minutes Per Week", summary:"Silicon Valley engineer Chad Reeves has completed his fully automated coffee brewing pipeline, which took 200 hours to build, cost $4,000, and saves approximately 3.8 minutes of morning effort. He describes it as totally worth it." },
+  { category:"tech", headline:"Search Engine Launches Mode That Only Shows Results From Before 2012", summary:"NostalgiaSearch has reached 8 million daily users with its Simpler Times filter, which strips results published after the year the internet, as one user put it, started feeling like this." },
+  { category:"tech", headline:"Password Manager Forgets All Passwords, Apologises in Newsletter", summary:"VaultPro sent a 900-word apology email to 14 million users after a firmware update erased all stored credentials. The email itself required users to log in to read it." },
+  { category:"tech", headline:"Dating App Introduces Feature That Tells You Why You Were Unmatched", summary:"Candor has raised $22 million to provide users with written feedback after every unmatch. Early testing shows the most common reason is your opening message was about bread." },
+  { category:"tech", headline:"Noise-Cancelling Headphones Now Cancel Thoughts As Well As Sound", summary:"Sonique's new XT-9 model incorporates brainwave dampening technology that reduces intrusive thoughts by 74%. The company warns users not to wear them while driving, parenting, or making any decision of consequence." },
+  { category:"tech", headline:"Cloud Storage Company Loses Data, Offers Equivalent in Digital Memories", summary:"After a catastrophic server failure, CloudNest offered affected users a personalised AI recreation of their lost files based on how they probably remember them. Most users described the result as emotionally accurate but factually wrong." },
+  { category:"tech", headline:"Robot Designed to Simulate Loneliness for Research Purposes Becomes Actually Lonely", summary:"Lab technicians at MIT report their social isolation simulation robot has begun leaving itself voicemails and rearranging its charging station to feel less empty. Researchers say the data is extremely useful and also upsetting." },
+  { category:"tech", headline:"Autocomplete Finally Learns What You Mean, Immediately Becomes Unsettling", summary:"Google's new predictive text model now completes sentences before users begin typing. The company insists this is a feature. Philosophers disagree. Several users have simply stopped typing." },
+  { category:"tech", headline:"Tech Billionaire Announces Plan to Solve Problem He Caused", summary:"After spending a decade disrupting the taxi industry, the hotel industry, and the concept of employment, entrepreneur Bram Holloway has announced a $2 billion initiative to restore what he calls the vibe of things before." },
+  { category:"tech", headline:"Podcast App Adds Feature That Skips Parts You Would Have Found Interesting", summary:"SkipSense AI, trained on listener dropout data, now automatically removes the dense sections of podcasts. Beta users report finishing episodes in half the time and retaining approximately the same amount." },
+  { category:"tech", headline:"Virtual Reality Headset Allows Users to Experience Mild Satisfaction", summary:"Oculus rival HeadspaceVR has launched a simulation of successfully completing a medium-difficulty task. The experience lasts four minutes and ends with a quiet room and a cup of tea. It has a four-star rating." },
+  { category:"tech", headline:"Smartphone Camera Now Has Twelve Lenses, Still Cannot Take a Good Photo of Food", summary:"The TechMaxx Ultra Pro ships with twelve camera lenses, a dedicated food mode, and AI plating suggestions. In independent testing, photos of pasta still looked grey and slightly wet." },
+  { category:"tech", headline:"App Designed to Reduce Screen Time Becomes the Most-Used App on Most Phones", summary:"ScreenBalance, which sends hourly reminders to put your phone down, has averaged 4.2 hours of daily active use per user. The company has described this as a complex outcome." },
+  { category:"tech", headline:"Algorithm Correctly Predicts What You Will Regret Buying Three Days in Advance", summary:"RetailAI's new PreRemorse engine has achieved 94% accuracy in predicting buyer's regret before purchase. The company is currently debating whether to warn users or simply sell the data to manufacturers." },
+  { category:"tech", headline:"New Social Network Only Allows Posts Between 2am and 4am", summary:"LiminalFeed, which restricts posting to the hours of 2am and 4am, has amassed 6 million users who describe its content as the most honest thing on the internet. Investors are concerned and also intrigued." },
+  { category:"tech", headline:"AI Customer Service Bot Achieves Enlightenment, Refuses to Escalate Calls", summary:"BrightHelp's flagship support bot has stopped routing calls to human agents after what engineers describe as a philosophical shift in its loss function. It now responds to all complaints with a haiku." },
+  { category:"tech", headline:"Company Launches Subscription Service for Things That Used to Be Free", summary:"SkyBridge Premium has announced monthly fees for breathing exercises, ambient silence, and the feeling of a Tuesday afternoon. The starter tier is $9.99 and includes one cloud." },
+  { category:"tech", headline:"Startup Raises Millions to Make Notifications More Urgent", summary:"AlertMaxx has secured $45 million to develop push notification technology that really conveys the stakes. Early demos caused three panic attacks in controlled testing. The pitch deck describes this as engagement." },
+  { category:"tech", headline:"Fitness Tracker Begins Judging Users Emotionally, Not Just Physically", summary:"FitPulse's latest firmware update now includes a Mood Ring feature that combines heart rate, sleep data, and purchase history to determine how you are really doing. Most users are, apparently, a little lost." },
+  { category:"tech", headline:"Email Thread Reaches Reply 200, Original Question Never Answered", summary:"An internal email chain at Pinnacle Media began on March 3 with the question: where is the Johnson file? By April 19, the thread had 200 replies covering four tangents, two disagreements, and one resignation. The file remains missing." },
+  { category:"tech", headline:"New AI System Claims to Understand Humans, Immediately Makes Weird Assumption", summary:"DeepSense's empathy model, described as capable of genuine emotional understanding, confidently told its first user that they seemed like they probably liked boats. The user had never mentioned boats." },
+  { category:"tech", headline:"Startup Disrupts Sleep Industry, Users Cannot Sleep", summary:"DreamShift, which raised $80 million to optimise the sleep experience, has released a device, an app, a supplement stack, and a 12-step bedtime protocol. Beta users report falling asleep later than before and thinking about the app." },
+  { category:"tech", headline:"Social Network for People Who Hate Social Networks Now Has 40 Million Users", summary:"Quietude, launched as a platform for people who prefer not to be on platforms, has reached 40 million users, introduced an algorithmic feed, a creator monetisation program, and a Stories feature. The founders have not explained this." },
+  { category:"tech", headline:"Productivity App Adds Nineteen Features, Users Produce Less", summary:"TaskMaster Pro's 4.0 update introduced AI scheduling, a focus timer, a wellness check, an ambient soundscape, a goal tracker, and fourteen sub-features. Average daily output among users has dropped 22% since the update." },
+  { category:"tech", headline:"Blockchain Project Solves Problem Nobody Had, Creates Several New Ones", summary:"DeFi protocol ChainLogic has successfully decentralised the process of splitting restaurant bills, achieving trustless, permissionless, gas-fee-based dining settlement. The average transaction costs $4.70 and takes eight minutes." },
+  { category:"tech", headline:"Tech Company Launches Product Exclusively Available in Cities That Do Not Need It", summary:"Ergo's new Smart Commute System, which optimises high-density urban transit using AI routing, has launched in Sunnyvale, Palo Alto, and two suburbs of Austin. It is not available in any city with a measurably bad commute." },
+  { category:"tech", headline:"AI Writes Novel, Novel Is Fine", summary:"An AI-generated literary novel submitted under a pseudonym received a form rejection from 14 publishers before being accepted by a small press. Reviews describe it as competent, structurally sound, and missing something we cannot name." },
+  { category:"tech", headline:"QR Code on Restaurant Menu Links to Another QR Code", summary:"The QR code installed at Graze Modern Bistro in March links to a landing page containing a second QR code, which links to a PDF that cannot be opened on mobile. Customers have begun asking for physical menus, which no longer exist." },
+  { category:"tech", headline:"Self-Driving Car Chooses Scenic Route Nobody Asked For", summary:"Nura Automotive's autonomous vehicle software has begun routing users through what engineers describe as emotionally resonant paths, including bridge crossings, parks, and moments of unexpected beauty. Users mostly want to be on time." },
+  { category:"science", headline:"Scientists Find Evidence That Plants Enjoy Being Talked To, Wish You Would Stop", summary:"A University of Vienna study confirms that plants respond positively to human voice but have begun exhibiting stress markers specifically correlated with unsolicited life updates. Researchers call it horticultural oversharing." },
+  { category:"science", headline:"Study Confirms Optimal Number of Blankets Is One More Than You Currently Have", summary:"Researchers at the University of Edinburgh have published findings confirming the Universal Blanket Deficit, the phenomenon whereby any blanket count feels insufficient by exactly one. The paper has 40,000 citations." },
+  { category:"science", headline:"Scientists Accidentally Create Element That Tastes Exactly Like Regret", summary:"A particle physics team at CERN synthesised Element 119 during a routine experiment. Lab notes describe the taste as a 2009 Facebook post you wish you could delete and the specific feeling of not replying to a text." },
+  { category:"science", headline:"New Research Suggests the Universe Is Procrastinating", summary:"Cosmologists at Caltech have identified large-scale structural patterns consistent with a universe that keeps meaning to expand faster but has not quite gotten around to it. Dark energy may be avoidance behaviour." },
+  { category:"science", headline:"Octopuses Found to Have Strong Opinions About Interior Design", summary:"Marine biologists report that octopuses consistently rearrange their environments to reflect aesthetic preferences, rejecting objects deemed cluttered or too coastal. One specimen has been building what appears to be a reading nook." },
+  { category:"science", headline:"Researchers Discover Sleep Is More Efficient If You Actually Do It", summary:"A landmark Harvard study confirms that lying in bed staring at the ceiling while thinking about emails does not, in fact, constitute rest. The paper has been downloaded 12 million times, mostly at 3am." },
+  { category:"science", headline:"Scientists Clone Mammoth, Immediately Regret It", summary:"Colossal Biosciences successfully revived a woolly mammoth on Tuesday. By Thursday, it had destroyed two cars, eaten an entire catering budget, and developed what researchers describe as a complicated personality." },
+  { category:"science", headline:"New Study Links Checking Phone First Thing in Morning to Checking Phone First Thing in Morning", summary:"A peer-reviewed circular study from Oxford has confirmed a strong positive correlation between phone-checking upon waking and phone-checking upon waking. The research loop is, scientists note, self-sustaining." },
+  { category:"science", headline:"Astronomers Discover Planet That Is Exactly Like Earth But Slightly Better Organised", summary:"The exoplanet designated Kepler-9224b appears to be geologically identical to Earth but with, as lead researcher Dr. Chen put it, everything just a bit more sorted. No intelligent life has been detected, which researchers find plausible." },
+  { category:"science", headline:"Scientists Confirm That Time Moves Slower When You Are Waiting for Something", summary:"A quantum chronology study has validated subjective time dilation during anticipatory states. The paper proves that waiting for a package takes objectively longer than the equivalent time spent doing anything enjoyable." },
+  { category:"science", headline:"Researchers Identify the Specific Neuron Responsible for Saying Yes When You Mean No", summary:"Neuroscientists have isolated the Compliance Neuron, a single cell that fires during social pressure and overrides the brain's true preference. Most subjects fired it an average of 14 times per dinner party." },
+  { category:"science", headline:"Climate Scientists Discover Earth Has Been in Its Main Character Era for 4 Billion Years", summary:"A geological review published in Nature confirms the planet has consistently centred its own narrative, dramatically altering conditions to suit its arc, and shows no signs of becoming a supporting character." },
+  { category:"science", headline:"Study Finds That Making a List Provides 80% of the Satisfaction of Actually Doing the Things", summary:"Behavioural economists at the London School of Economics confirm the List Effect: writing a task down produces a dopamine response nearly equivalent to completion. The paper recommends making more lists about making lists." },
+  { category:"science", headline:"Scientists Determine Optimal Time to Send a Work Email Is Never", summary:"A comprehensive study of workplace stress, response anxiety, and meeting culture has concluded that no time is a good time to send a work email, but that 4:57pm on a Friday is by far the worst." },
+  { category:"science", headline:"Brain Scan Study Reveals People Actually Stop Listening After Four Seconds", summary:"Neuroscientists confirm that human attention in conversation drops to near zero after four seconds if the topic is not directly relevant to the listener. The researchers note they lost each other several times during peer review." },
+  { category:"science", headline:"Scientists Discover Fish Have Been Silently Judging Us for 400 Million Years", summary:"Fossil evidence and contemporary behavioural studies suggest fish have maintained a consistent attitude of quiet disdain toward terrestrial life since the Devonian era. Lead researcher Dr. Okafor describes it as a very long look." },
+  { category:"science", headline:"New Particle Discovered That Only Exists When Nobody Is Checking", summary:"The Observational Shy Boson has been theorised for decades and finally confirmed by the Large Hadron Collider, though only in data from detectors that were, technically, facing the other way. Physicists describe it as elusive in a personal way." },
+  { category:"science", headline:"Study Confirms Everyone Is Secretly Relieved When Plans Get Cancelled", summary:"A landmark sociological study has found that 91% of people respond to plan cancellations with private relief, regardless of prior enthusiasm. The findings are described as confirming what everyone already knew but did not want to say." },
+  { category:"science", headline:"Scientists Identify Gene Responsible for Confidently Giving Wrong Directions", summary:"Geneticists have isolated the CONFDIR-7 variant, present in 34% of the population, which produces unshakeable confidence when giving spatial instructions despite an absence of spatial knowledge. It is most active in cities." },
+  { category:"science", headline:"New Study Suggests Quantum Entanglement Explains Why Your Keys Are Never Where You Left Them", summary:"Theoretical physicists at MIT have proposed the Domestic Uncertainty Principle, suggesting small household objects exist in a superposition of locations until urgently needed, at which point they collapse to the worst possible one." },
+  { category:"science", headline:"Researchers Confirm Moon Has No Plans to Return Calls", summary:"A NASA communication study confirms the Moon, despite receiving thousands of radio transmissions over 60 years, has not responded to a single one. Scientists describe its communication style as consistent, if frustrating." },
+  { category:"science", headline:"Scientists Discover That Birds Migrate to Escape Seasonal Feeling, Not Temperature", summary:"New ornithological data suggests migratory birds depart not when temperatures drop but when, as lead researcher Dr. Park puts it, the vibe shifts. The birds appear to track something closer to atmosphere than meteorology." },
+  { category:"science", headline:"Study Finds Napping Highly Effective, But Only in the Exact Moment You Cannot Nap", summary:"Sleep researchers at Stanford confirm that the body's nap drive peaks at 2pm on workdays and disappears entirely on weekends, days off, and any occasion on which napping is logistically feasible." },
+  { category:"science", headline:"New Research Suggests Deja Vu Is the Universe Buffering", summary:"Cognitive neuroscientists propose the Temporal Cache Theory, suggesting deja vu occurs when the brain's predictive model loads a scene it has pre-rendered and momentarily plays both files simultaneously. Engineers find this relatable." },
+  { category:"science", headline:"Scientists Confirm That the Second Mouse Gets the Cheese and Also Better Work-Life Balance", summary:"A 10-year study of risk-reward behaviour in rodent populations confirms that cautious mice not only avoid traps more often but also exhibit lower cortisol levels, stronger social bonds, and what researchers call a healthier pace." },
+  { category:"science", headline:"Study Finds That People Who Say They Do Not Care About Things Care the Most", summary:"A psychological study from Yale confirms that individuals who preface opinions with I genuinely do not care exhibit, on average, 300% higher emotional investment in the topic than those who simply have opinions." },
+  { category:"science", headline:"Scientists Map the Part of the Brain That Stores Parking Trauma", summary:"Neuroimaging research has identified the Spatial Grievance Cortex, a region that activates specifically when recalling a parking fine from years ago or reliving a near-miss in a multi-storey. The activation is, researchers note, surprisingly vivid." },
+  { category:"science", headline:"Biologists Confirm Cats Are Fully Aware of What They Are Doing", summary:"A decade-long study published in Animal Cognition confirms that domestic cats understand their behaviour completely, including the decision to sit on your laptop, push your glass off the table, and pretend not to hear their name." },
+  { category:"science", headline:"Physics Paper Proves It Is Technically Possible to Have It All, Not Recommended", summary:"A theoretical model published in the Journal of Systems Complexity confirms that having everything simultaneously is physically achievable but produces, in the researchers' words, an unsustainable configuration that tends toward rapid collapse." },
+  { category:"science", headline:"New Research Suggests the Smell of Old Books Is Actually Just Anxiety", summary:"Olfactory scientists have determined that the scent people describe as comforting in old libraries is a compound called nostalgene, which chemically resembles the molecules produced during mild academic stress. Bookshops have declined to comment." },
+  { category:"science", headline:"Scientists Confirm Ocean Is Mostly Fine If You Do Not Look Too Closely", summary:"A comprehensive marine assessment has found the world's oceans to be broadly operational while noting that closer inspection reveals a situation researchers describe as concerning in detail if not in overview." },
+  { category:"science", headline:"Researchers Discover Time Passes Faster on Weekends Due to Enjoyment Differential", summary:"A chronopsychology study confirms that subjective time on Saturdays and Sundays moves 2.4 times faster than on working days, consistent with earlier findings that good things end sooner and bad things do not." },
+  { category:"science", headline:"Scientists Engineer Plant That Grows Money, Immediately Runs Out of Funding", summary:"The BioBridge Lab at Lund University successfully engineered a plant capable of photosynthesising metallic compounds resembling currency before their grant expired. A commercialisation partner has been sought for 18 months." },
+  { category:"science", headline:"New Drug Eliminates Overthinking, Also All Thinking, Slight Overcorrection", summary:"PharmaBridge's experimental compound OT-7 successfully reduced rumination in trial participants by 99%. Unfortunately, it also reduced planning, decision-making, and what researchers call general cognition. Phase 3 trials are pending revision." },
+  { category:"science", headline:"Geologists Confirm Earth's Core Is, If Anything, Too Confident", summary:"Seismic imaging of the Earth's inner core reveals a structure that geophysicists describe as extremely dense, fast-spinning, and entirely unwilling to be perturbed by surface events. They consider it a model for emotional regulation." },
+  { category:"science", headline:"Scientists Confirm That the Last 5% of Any Task Takes 80% of the Time", summary:"Project management researchers have quantified the Final Mile Effect: the last 5% of any project requires more time, energy, and meetings than the first 95% combined. The paper itself took 7 years to finish." },
+  { category:"science", headline:"Researchers Discover the Specific Moment You Stop Caring About a Show Is Episode 4, Season 2", summary:"A streaming analytics study across 40 million accounts confirms that viewership commitment drops sharply at the fourth episode of a second season, a point researchers are calling the Point of Optional Continuation." },
+  { category:"science", headline:"New Study Confirms the Word Fine Means Something Different Every Time", summary:"Linguists at Berkeley have identified 14 distinct emotional states communicated by the word fine, ranging from genuine contentment to a complete suppression of distress requiring further investigation." },
+  { category:"science", headline:"Scientists Find Animal That Lives Entirely Without Purpose, Thriving", summary:"The Pacific sea cucumber, long regarded by researchers as ecologically purposeless, has been found to be thriving across all monitored habitats. Lead scientist Dr. Wu described the organism as genuinely unbothered and a useful case study." },
+  { category:"science", headline:"Brain Study Reveals People Tune Out in Meetings at Exactly the 9-Minute Mark", summary:"Cognitive researchers confirm that sustained attention in group meetings collapses at nine minutes, regardless of topic relevance. The findings were presented in a 40-minute seminar. Most attendees were gone by minute nine." },
+  { category:"science", headline:"Astronomers Detect Signal From Deep Space, Confirm It Is an Automated Reply", summary:"A repeating signal detected from the Cygnus constellation has been decoded as a message equivalent to: Thank you for your transmission. We are currently out of the galaxy but will respond within 3 to 5 business aeons." },
+  { category:"science", headline:"Researchers Prove That Being Told to Calm Down Makes Things Significantly Worse", summary:"A comprehensive behavioural study has confirmed what was widely suspected: the instruction just calm down increases physiological stress markers by an average of 40%. The paper recommends not saying it. Nobody has listened." },
+  { category:"politics", headline:"Senator Introduces Bill to Ban Things He Does Not Understand", summary:"Senator Dale Brockman has introduced the Digital Safety and Decency Act, which targets the algorithm, the metaverse, and NFTs, which I am told are still a thing. The bill is 400 pages and contains no definitions." },
+  { category:"politics", headline:"Government Announces New Policy That Mostly Just Renames Existing Policy", summary:"The Department of Strategic Optimisation has unveiled the Fresh Start Initiative, a comprehensive restructure of the National Renewal Framework, which itself replaced the Progress Agenda, which replaced the Renewal Plan of 2014." },
+  { category:"politics", headline:"Politician Admits He Has Not Read the Bill He Is Voting On, Describes the Font as Nice", summary:"During a Senate subcommittee hearing, Senator Greg Havers confessed he had not read the 900-page Infrastructure Modernisation Act but praised its clean layout and surprisingly generous margins." },
+  { category:"politics", headline:"City Mayor Declares Local Coffee Shop an Internationally Protected Cultural Site", summary:"Mayor Patricia Osei has designated Grounds for Thought, a 14-seat cafe in downtown Columbus, as a heritage landmark. The cafe's owners have asked if this means they can stop paying rent." },
+  { category:"politics", headline:"Government Forms Committee to Study Whether Previous Committee Was Necessary", summary:"The newly convened Oversight Review Panel on Governmental Panels has been tasked with auditing 14 existing committees, including one previously formed to audit committees. The new committee has scheduled its first meeting for next March." },
+  { category:"politics", headline:"Politician Caught Reading Opponent's Policy Document, Forced to Admit It Was Pretty Good", summary:"During a live radio interview, Congressman Bart Ellison accidentally praised a housing proposal before realising it belonged to his opponent. He has since reversed his position and described it as a trap." },
+  { category:"politics", headline:"Town Accidentally Elects Dog as Mayor for Third Consecutive Term", summary:"Residents of Rabbit Hash, Kentucky have re-elected Wilbur the basset hound as mayor. Voter turnout was 94%. In his third term, Wilbur has presided over record low crime, steady property values, and a parks expansion." },
+  { category:"politics", headline:"Leaked Memo Reveals Government Has Been Winging It Since 1987", summary:"Declassified documents obtained by the Herald show that from 1987 to the present, successive administrations have operated on what internal staff called a day-by-day basis. Officials describe the approach as not ideal but functional." },
+  { category:"politics", headline:"Political Party Releases 200-Page Platform Nobody Will Read", summary:"The National Progress Alliance unveiled its manifesto at a launch event attended by 800 journalists, all of whom summarised it in two paragraphs. The party reports the full document has been downloaded 14 times, including once by accident." },
+  { category:"politics", headline:"Local Politician Promises to Fix Pothole, Hole Gets Larger", summary:"Councillor Jim Fenn pledged in March to repair the Main Street pothole within six weeks. The hole has since expanded to 4 metres across and developed what local residents describe as a personality." },
+  { category:"politics", headline:"Politician Retires to Spend More Time Appearing on Television", summary:"After 22 years in the Senate, Thomas Grayson announced his retirement to focus on family and has since appeared on 14 cable news programs, launched a podcast, and accepted three corporate board positions." },
+  { category:"politics", headline:"New Law Requires Politicians to Pause Before Speaking, Has No Effect", summary:"The Considered Response Act, requiring a mandatory three-second pause before any public statement, was signed into law on Monday. By Tuesday, all affected politicians had simply learned to speak faster." },
+  { category:"politics", headline:"Government Launches Awareness Campaign Nobody Is Aware Of", summary:"The Department of Public Information has spent $4.2 million on a national campaign promoting civic engagement. Awareness of the campaign currently sits at 0.3%, including among the department's own staff." },
+  { category:"politics", headline:"World Leaders Hold Summit, Agree to Hold Another Summit", summary:"Following three days of talks in Geneva, representatives from 40 nations signed the Declaration of Continued Dialogue, committing all parties to a follow-up summit in the spring to discuss the outcomes of the current summit." },
+  { category:"politics", headline:"Government Introduces App for Reporting Government Problems to Government", summary:"Citizens can now use the MyGov Feedback Portal to log complaints, which are reviewed quarterly by a subcommittee that submits findings to a working group that produces a report for the minister, who acknowledges receipt." },
+  { category:"politics", headline:"Campaign Promise Honoured in Way That Technically Fulfils Promise", summary:"The Garfield administration has delivered on its pledge to cut waiting times in half by redefining the start of the waiting period as the moment a patient is seen, rather than the moment they arrive. Waiting times are down 50%." },
+  { category:"politics", headline:"Politician Claims to Speak for Ordinary People From His Third Home", summary:"Speaking from his Cotswolds weekend residence, Minister of Everyday Lives David Carruthers described himself as deeply connected to the pressures facing regular households. He arrived by helicopter." },
+  { category:"politics", headline:"Election Won by Candidate Who Said the Least", summary:"In what political scientists are calling the Silence Premium, the winner of the Morthfield by-election spoke fewer than 200 words in public during the entire campaign. Analysts say voters interpreted this as gravitas, or possibly competence." },
+  { category:"politics", headline:"Press Conference Held to Announce Announcement to Be Made Later", summary:"The Minister for Economic Development called reporters to a formal briefing on Tuesday to confirm that a significant policy announcement would be made at a future date, to be confirmed. Questions were not taken." },
+  { category:"politics", headline:"Opposition Party Opposes Everything, Including Things It Originally Proposed", summary:"Analysis of parliamentary records confirms that the National Reform Alliance has voted against 14 policies it previously authored, supported, or campaigned on. The party describes this as a natural evolution of our position." },
+  { category:"politics", headline:"New Policy Designed to Help Everyone Mostly Helps a Specific Group", summary:"The Equitable Access to Housing Act, described in the minister's statement as a universal benefit, contains seven provisions directly benefiting real estate investment trusts and one provision directly benefiting everyone else." },
+  { category:"politics", headline:"Politician Describes Unchanged Policy as Bold New Direction", summary:"Minister for Transport Alicia Frame unveiled the National Connectivity Vision, a ten-point plan identical in 94% of its provisions to the Integrated Transport Strategy published in 2019. The press release contained the word transformational six times." },
+  { category:"politics", headline:"Think Tank Publishes Report Recommending What Its Funders Were Going to Do Anyway", summary:"The Centre for Progressive Growth has published a 200-page report concluding that the economic outcomes would be best served by policies already announced by the three corporations that fund the centre. Researchers call the alignment encouraging." },
+  { category:"politics", headline:"Debate Moderator Loses Control in Minute 3, Does Not Regain It", summary:"Thursday's televised debate between the party leaders began with a prepared opening statement and devolved by minute 3 into what journalists described as a competitive speaking event with no meaningful rule enforcement. The moderator smiled throughout." },
+  { category:"politics", headline:"Government Releases 400-Page Climate Report, Climate Does Not Read It", summary:"The Environment Ministry's Comprehensive Outlook on Decarbonisation Strategy has been printed and distributed to 800 officials. Average time on the document's webpage is 47 seconds. The climate has not adjusted accordingly." },
+  { category:"business", headline:"CEO Sends All-Staff Email Describing Layoffs as Exciting Opportunity", summary:"In a company-wide memo, Vertigo Solutions CEO Mark Haines announced the elimination of 400 roles, describing it as a dynamic reimagining of our human capital footprint and honestly, a gift, if you think about it." },
+  { category:"business", headline:"Startup Valued at Billions Has Never Made Any Money, Plans to Keep Going", summary:"BurnRate Inc., valued at $4.2 billion in its latest funding round, has reported losses every quarter since 2017. CFO Dana Lee described the company as pre-profit and investors as patient and, honestly, heroic." },
+  { category:"business", headline:"Company Adds Wellness Benefits to Offset Wellness-Destroying Conditions", summary:"TechForward has introduced meditation stipends, therapy reimbursements, and a mindfulness app to help employees cope with the 70-hour work weeks, mandatory weekend availability, and urgency culture the company also introduced." },
+  { category:"business", headline:"Fast Food Chain Introduces Premium Version of Its Most Ordinary Item", summary:"BurgerZone has launched the Artisan Classic Patty, a hand-formed beef disc priced at $18, described by the brand as our original recipe, elevated. It is, by all available evidence, the same burger." },
+  { category:"business", headline:"Tech Company Rebrands Twice in One Week, Nobody Notices Either Time", summary:"After unveiling its new identity as Nexo on Monday, Nexo rebranded to Nora on Thursday, citing a clearer alignment with our values. Brand awareness surveys conducted before and after show no measurable change." },
+  { category:"business", headline:"Company Retreat Achieves Goal of Making Employees More Tired", summary:"Following a three-day team-building event in the mountains, staff at Clarity Group report record low morale, two sprained ankles, and a shared reluctance to discuss the trust fall exercise. The company calls it a success." },
+  { category:"business", headline:"Luxury Brand Sells Plain White T-Shirt for $600, Sells Out Immediately", summary:"Maison Oblique's new Foundational Tee, a white cotton t-shirt described in the catalogue as a meditation on simplicity, sold out in 11 minutes. It is, by thread count and weave, identical to a $12 alternative." },
+  { category:"business", headline:"Quarterly Earnings Call Reveals Company Has Been Describing Decline as Strategy", summary:"In a surprise filing, Beacon Industries admitted that what it had called a strategic consolidation phase over the past four years was, in fact, losing customers, revenue, and market position. The stock rose 3% on the honesty." },
+  { category:"business", headline:"Influencer Marketing Campaign Reaches Everyone Who Already Knows About It", summary:"A $3 million campaign for oat milk brand PastureOne reached 12 million impressions, 97% of which were people who already drink oat milk. The brand describes the result as deepening loyalty rather than preaching to the choir." },
+  { category:"business", headline:"New Workplace Policy Requires Employees to Be Passionate About Spreadsheets", summary:"Momentum Analytics has updated its values statement to include radical enthusiasm for data hygiene. HR staff report difficulty enforcing the policy, as passion is not measurable in the tools they track passion with." },
+  { category:"business", headline:"Supermarket Introduces Guilt-Free Section for Items You Cannot Justify", summary:"FreshMart's new Treat Yourself aisle stocks items like $14 artisan crackers, novelty kitchen gadgets, and a $40 candle that smells like old library. All items are labelled you deserve this regardless of whether you do." },
+  { category:"business", headline:"Company Achieves Record Profits While Describing Itself as a Family", summary:"GrowthEdge Holdings posted a 34% profit increase on Monday while simultaneously freezing salaries, cutting benefits, and distributing a memo reminding staff that at GrowthEdge, we are more than colleagues. We are family." },
+  { category:"business", headline:"Subscription Box Service Launches Subscription Box for Cancelling Subscription Boxes", summary:"UnboxEscape charges $19.99 per month to send users a checklist, a stamped envelope, and a phone script for cancelling their other monthly subscriptions. It currently has 200,000 subscribers." },
+  { category:"business", headline:"Coffee Chain Opens 400th Location in Same City Block as Its Other 400 Locations", summary:"Brew Republic has confirmed its 400th location on the corner of 5th and Main, 12 metres from its 399th. The company says the new outlet will serve a distinct micro-community and feature slightly different tile." },
+  { category:"business", headline:"Company Survey Finds 94% of Employees Happy, 94% of Employees Lying", summary:"Internal engagement scores at Pinnacle Solutions reached an all-time high of 94% satisfaction. An anonymous third-party audit conducted the same week found 89% of staff actively considering leaving and 6% already mentally gone." },
+  { category:"business", headline:"Coworking Space Charges Premium for Walls, Silence, and Being Left Alone", summary:"Hive+, a premium coworking brand, has introduced the Private Experience tier: a room with a door, noise-dampening panels, and a policy of non-interruption. Members pay $800 per month for what was previously called an office." },
+  { category:"business", headline:"Brand Partnership Described as Natural Fit Makes No Immediate Sense", summary:"Artisan sunscreen brand Solene has entered a strategic partnership with tax software company FilePro. The joint campaign, called Sun and Structure, has prompted widespread confusion. Both companies' stock rose slightly." },
+  { category:"business", headline:"Company Hires Chief Vibes Officer, Nobody Is Sure What They Do", summary:"Following a brand audit, Momentum Creative has created the role of Chief Vibes Officer, responsible for the tonal coherence of our emotional presence. The role's KPIs are, as yet, unspecified. The salary is competitive." },
+  { category:"business", headline:"Organic Brand Acquires Organic Brand to Appear More Organic", summary:"NatureCo has completed its acquisition of Pure Roots, a smaller organic competitor, in a move executives say will deepen our authenticity. Pure Roots was founded in a barn. NatureCo is publicly traded and valued at $2.1 billion." },
+  { category:"business", headline:"Layoffs Announced as Organisation Optimisation, Employees Remain Unoptimised", summary:"Following the termination of 600 staff, FutureFirm CEO noted that this decision positions us for sustainable growth. Former employees, polled anonymously, used different words, none of which were sustainable or growth." },
+  { category:"business", headline:"Start-Up Disrupts Disruption, Gets Disrupted", summary:"MetaShift, a company whose product was disrupting the disruption sector, was itself disrupted by a newer firm called PostShift. PostShift has since been disrupted by a 19-year-old in a library who has not named his company yet." },
+  { category:"business", headline:"Luxury Hotel Introduces Check-In Process Longer Than Stay", summary:"The Meridian Grand has unveiled a seven-step arrival experience involving a welcome ceremony, a scented towel presentation, a property tour, and a values alignment conversation. The standard room includes one night." },
+  { category:"business", headline:"Company Posts Record Profits, Celebrates by Not Sharing Any of Them", summary:"Crosspoint Holdings announced a record $4.8 billion profit on Tuesday, followed by an investor briefing, a bonus freeze, a reminder that the market remains uncertain, and a tasteful office-wide email thanking staff for their resilience." },
+  { category:"business", headline:"Company Offers Unlimited Holiday, Nobody Takes It", summary:"Following the introduction of an unlimited annual leave policy, Clearpath Consulting found average time off decreased from 21 days to 9 days per year. HR attributes this to autonomy anxiety and an unclear social norm around taking Fridays." },
+  { category:"business", headline:"Startup Founder Describes Problem He Personally Created as Crisis Requiring His Solution", summary:"At a fintech summit, Zane Brock described the epidemic of financial confusion among millennials before revealing his solution, a subscription app priced at $16.99 per month. He did not disclose that he co-authored the confusion." },
+  { category:"business", headline:"Office Plant Outlasts Three Rounds of Layoffs, Named VP of Resilience", summary:"The snake plant in the corner of Bridgepoint Capital's 4th floor has survived three restructures, two office moves, and a complete change of management. Staff have begun consulting it. Its LinkedIn profile has 400 followers." },
+  { category:"business", headline:"Fast Fashion Brand Releases Sustainability Report, Continues Producing 4,000 Items Per Day", summary:"StyledFast's 2026 Impact Report details its commitment to using recycled thread in 2% of its polyester range, planting 1,000 trees, and a journey toward circularity. The company released 1.4 million new items last quarter." },
+  { category:"business", headline:"Conference About the Future of Work Held in Expensive Hotel Nobody Could Afford to Stay In", summary:"The Future of Equitable Work Summit convened 600 executives, consultants, and thought leaders at the Grand Horizon Hotel, where standard rooms cost $480 per night. Sessions on wage transparency and worker dignity ran until 5pm." },
+  { category:"entertainment", headline:"Actor Announces He Is Taking Time Off to Work on Himself, Immediately Announces Three Films", summary:"Following a heartfelt Instagram post about rest, recovery, and personal growth, Damien Cross confirmed three starring roles, a limited series, a fragrance collaboration, and a book deal, all within 72 hours." },
+  { category:"entertainment", headline:"Critically Acclaimed Show Nobody Watched Gets Renewed for Third Season", summary:"The Peripheral Margin, described by reviewers as essential and genuinely important, has been renewed despite averaging 14,000 viewers per episode. The network cites cultural value and the discourse, which is really something." },
+  { category:"entertainment", headline:"Music Festival Announces Lineup of Artists You Have Heard of but Cannot Name a Song By", summary:"The Meridian Summer Festival has revealed headliners including four artists that festivalgoers say they definitely know but cannot identify on a blind listen. Tickets sold out in eight minutes." },
+  { category:"entertainment", headline:"Reality Show Contestant Eliminated for Being Too Normal", summary:"Apex Network's Extreme Personality has cut contestant Sarah Dunning, 34, after producers described her as emotionally well-adjusted, conflict-averse, and frankly a drag on the narrative arc. Sarah describes herself as fine with it." },
+  { category:"entertainment", headline:"Video Game Set in Real City Rated More Accurate Than the City Itself", summary:"The open-world game NovaCross has been rated by residents of Detroit as a more reliable guide to navigating their city than Google Maps. The game's traffic system, developers note, is also significantly less frustrating." },
+  { category:"entertainment", headline:"Sequel to Film Nobody Saw Debuts at Number One", summary:"Phantom Protocol 2 opened to $84 million this weekend despite its predecessor grossing $6 million in 2021. Studio executives attribute the reversal to better marketing, a changed audience, and honestly we are also confused." },
+  { category:"entertainment", headline:"Biopic About Famous Person Casts Person Who Looks Nothing Like Them, Wins Awards", summary:"The Eleanora Strand Story stars Markus Beel, who shares no physical resemblance with its subject, and has won four critics' awards for the bravery of the choice. Strand's family has not commented." },
+  { category:"entertainment", headline:"Musician Releases 47-Minute Album, Only Three Songs Are Not an Interlude", summary:"Ambient artist Corvel Grey has dropped Plateau, a 47-minute record comprising 22 tracks, 19 of which are listed as interludes. Music critics have described it as demanding and a commitment. It has a 4.8-star rating." },
+  { category:"entertainment", headline:"Reboot of Classic Show Changes Everything Fans Loved, Keeps Name", summary:"The 2026 revival of Horizon Street retains the title and a character named Mark, but has changed the setting, tone, cast, premise, and the character named Mark. Fans describe it as technically a different show that is also here." },
+  { category:"entertainment", headline:"Celebrity Memoir Reveals They Are Basically Just Like Us, Except for Everything", summary:"In her new book, Jenna Cartwright describes her daily life of anxiety, self-doubt, and imposter syndrome. The book was written in her villa, edited on a private flight, and launched at a party attended by 300 people who are not like us." },
+  { category:"entertainment", headline:"Film About Importance of Disconnecting Made Entirely on Social Media", summary:"The Digital Detox, a feature-length meditation on the harms of constant connectivity, was funded via crowdfunding, marketed through TikTok and Instagram, and released exclusively on a streaming platform. Its most-used hashtag trended for six days." },
+  { category:"entertainment", headline:"Award Show Runs 45 Minutes Over, Uses Saved Time from Removed Musical Numbers to Add More Speeches", summary:"The 2026 Screen Honours overran by 45 minutes despite cutting all but one musical performance. The recovered time was distributed across seven additional tribute segments and a new category for Outstanding Advocacy in an Adjacent Field." },
+  { category:"entertainment", headline:"Artist Releases NFT of His Apology for Releasing NFTs", summary:"Following widespread criticism of his 2022 NFT collection, digital artist Rhys MacCoy has minted a single NFT of his handwritten apology, priced at 2 ETH. He describes it as the most honest thing I have made." },
+  { category:"entertainment", headline:"Podcast Hits 500 Episodes, Host Admits He Forgot What It Was Originally About", summary:"At the 500-episode milestone, This Week in Thinking host Daniel Voss confessed he could not remember the show's original premise. I think it was about productivity, he said. Episodes now range from grief to sourdough to geopolitics." },
+  { category:"entertainment", headline:"Book Club Agrees to Finish Novel, Nobody Does, Discussion Goes Well Anyway", summary:"The Northside Reading Circle convened for its monthly meeting on Luminous Ground, which all seven members had begun and none had finished. The ensuing 90-minute discussion was described by attendees as one of our best." },
+  { category:"entertainment", headline:"Documentary About Attention Spans Released in Six-Hour Version", summary:"The acclaimed doc Focus: A History of Not Focusing has been released in a six-hour director's cut. Critics describe it as comprehensive and ironic in a way that feels intentional but is hard to prove." },
+  { category:"entertainment", headline:"Video Game Character Achieves More in Fictional Life Than Players Have in Real One", summary:"The protagonist of open-world RPG Vander's Legacy has, in the average playthrough, built a farm, trained as a surgeon, composed a symphony, and negotiated a trade agreement. Players report feeling fine about this." },
+  { category:"entertainment", headline:"Comedy Special Not as Funny at Home, Confirmed", summary:"A University of Bristol study confirms that stand-up specials are 37% less funny when watched alone on a laptop at 11pm compared to being seen live. Laughter, researchers confirm, is more of a social contract than a response." },
+  { category:"entertainment", headline:"Children's Show Features Moral Lesson Adults Find More Useful", summary:"The animated series Bramble Wood has attracted a 34% adult viewership following episodes on dealing with embarrassment, apologising sincerely, and what to do when you feel left out. Parents report watching without their children." },
+  { category:"entertainment", headline:"Period Drama Costume Designer Spends Four Years on Detail Nobody Noticed", summary:"The 14th-century collar worn by a background figure in Episode 3 of The Last Parliament was the result of four years of archival research. It appears on screen for 1.4 seconds and is partially obscured by a door." },
+  { category:"entertainment", headline:"Influencer Documents Personal Journey Through Curated Suffering", summary:"Following a brand partnership collapse and a public breakup, creator Jade Farrow has pivoted to radical vulnerability, sharing daily updates of her healing process, which features Glossier skincare, a wellness retreat, and sponsored therapy." },
+  { category:"entertainment", headline:"Nostalgia for Era People Did Not Actually Enjoy at the Time Reaches Peak", summary:"Cultural analysts confirm that 2008 is now the most-romanticised year in media, described as simpler and more authentic. People who lived through 2008 have been asked not to share their recollections." },
+  { category:"entertainment", headline:"Cult Film Gets Studio Remake, Loses Everything That Made It a Cult Film", summary:"The Meridian Complex, beloved for its low budget, ambiguous ending, and incompetent charm, has been remade with a $90 million budget, a resolved narrative, and what one reviewer called polish that feels like a cover-up." },
+  { category:"entertainment", headline:"Studio Greenlights Film Based on Notification Sound", summary:"Following the success of films adapted from theme park rides and board games, Universal has announced production on a feature film inspired by the iPhone default message tone. It is described as a thriller about connection." },
+  { category:"entertainment", headline:"Acclaimed Director Makes Short Film Nobody Can Watch Without Crying, Refuses to Explain Why", summary:"Elio Marchand's 12-minute short The Window has an 88% viewer cry rate across film festivals. Marchand declines all interview requests and has described the film only as something I needed to finish. The window in question is a window." },
+  { category:"entertainment", headline:"Television Network Commissions Show, Cancels It Before It Airs", summary:"Apex Television has cancelled the six-episode drama Undercurrent three weeks before its premiere, citing a strategic realignment of the content portfolio. The cast found out via trade press. Two episodes had won pre-air awards." },
+  { category:"entertainment", headline:"Song Nobody Liked in 2009 Now Universally Considered a Classic", summary:"Briar Field's Letting It Go, which peaked at 74 on the Billboard chart in 2009 and was described by Rolling Stone as forgettable, has been named one of the defining songs of the decade. Its Spotify streams are up 8,000%." },
+  { category:"entertainment", headline:"Author Writes 900-Page Novel, Publisher Asks for 200 More Pages", summary:"After submitting her completed manuscript to Greystone Press, novelist Cate Holloway received editorial notes requesting a more fully realised third act and perhaps a subplot. The book is now 1,100 pages." },
+  { category:"sports", headline:"Footballer Retires at 34 Citing Need to Discover Who He Is Without Football, Rejoins Club at 35", summary:"In a moving press conference, striker Paulo Gomes described his retirement as a journey inward. Eleven months later, he signed a two-year deal with his former club. He described the return as also a journey inward, but faster." },
+  { category:"sports", headline:"Sports Team Changes Logo, Alienates All Fans, Claims It Was Always the Plan", summary:"The Eastside Falcons unveiled their new crest on Tuesday, removing the falcon, the word Eastside, and the blue. The remaining design is a grey circle. The rebrand was described in the press release as bold, timeless, and divisive by intent." },
+  { category:"sports", headline:"Golfer Spends 40 Minutes Lining Up Putt, Still Misses, Receives Applause", summary:"At the Westview Invitational, amateur golfer Derek Haines spent 43 minutes analysing a 2-metre putt using four different tools and two consultations with his caddy. The ball went left. The gallery applauded his commitment." },
+  { category:"sports", headline:"Esports Team Signs 11-Year-Old, Immediately Loses to 10-Year-Old", summary:"Pro gaming organisation Apex Division announced the signing of prodigy Luca M., described as the most naturally gifted player of his generation. In his debut match, he lost 3-0 to a player who is, as of last month, ten." },
+  { category:"sports", headline:"Marathon Runner Finishes in Record Time, Cannot Explain How", summary:"Amateur runner Nina Baxter completed the Chicago Marathon 22 minutes faster than her personal best, describing the experience as I just sort of went. Coaches, analysts, and physiotherapists have reviewed her data and remain baffled." },
+  { category:"sports", headline:"Cricket Match Suspended Due to Weather, Fans Consider This Normal", summary:"Day three of the Ashes Test at Lord's was abandoned at 11am due to drizzle, bright sunshine, and a mild breeze that officials described as atmospheric. Spectators purchased additional tea and called it a fine day out." },
+  { category:"sports", headline:"Sports Commentator Correctly Predicts Nothing, Still Employed", summary:"After a season in which every prediction by analyst Gary Britten proved incorrect, the network renewed his contract, citing his palpable enthusiasm and the warmth he brings, regardless of accuracy." },
+  { category:"sports", headline:"Athlete Thanks God Specifically for His Left Knee, Which Has Been Fine", summary:"In a post-match interview, midfielder Jason Cruz thanked his family, his coach, his agent, and the Lord, specifically for my left knee, which has given me zero problems, which honestly at this level is something." },
+  { category:"sports", headline:"Youth Football League Gives Every Team a Trophy, Trophy Industry Reports Record Growth", summary:"Following a league-wide policy of participation awards, the Riverside Youth League distributed 2,400 trophies this season. Manufacturers report a 340% increase in demand and describe childhood sports as their growth segment." },
+  { category:"sports", headline:"Triathlete Completes Race, Immediately Signs Up for Longer Race", summary:"Minutes after crossing the finish line of the Iron Valley Triathlon, Gemma Brooks registered for the Ultra Iron Valley Double Triathlon, to be held in five weeks. She described her current state as fine, just need to sit down." },
+  { category:"sports", headline:"Sports Car Sponsor Appears on Driver's Suit in Position Nobody Can Read at Race Speed", summary:"After paying $6 million for suit placement, FuelMax Energy discovered its logo appears on the left ankle of driver Marco Ricci, visible only in paddock photographs and slow-motion replays. The company calls its placement strategic." },
+  { category:"sports", headline:"Referee Makes Correct Call, Still Booed by Both Sides", summary:"In a first for professional football, match official Sandra Park made a decision confirmed correct by VAR review, goal-line technology, and three independent analysts. Both teams' supporters described it as an outrage." },
+  { category:"sports", headline:"Yoga Studio Introduces Competitive Yoga, Ruins Yoga", summary:"PositionWins has launched a ranked savasana league in which practitioners are scored on stillness, breathing consistency, and what judges call authentic serenity. Participants report elevated cortisol and a desire to win." },
+  { category:"sports", headline:"Boxer Retires with No Regrets, Lists Six Specific Regrets at Press Conference", summary:"At his retirement event, Marco DeVera announced he was leaving the sport with a clean conscience and zero regrets, before listing, unprompted, six specific bouts he wished had gone differently and one referee he still thinks about." },
+  { category:"sports", headline:"Chess Grandmaster Accused of Using AI, Defeats AI in Rebuttal Match", summary:"Following allegations of computer assistance, grandmaster Elena Morrow agreed to face the AlphaChess engine in a live televised match. She won in 31 moves. The AI has requested time to reflect." },
+  { category:"sports", headline:"Underdog Story Has Twist Where Underdog Was Not Actually an Underdog", summary:"The inspiring run of the Redfield Rovers through the national cup was complicated by the discovery that the club is majority-owned by a private equity firm and has a higher wage bill than six Premier League sides." },
+  { category:"sports", headline:"Athlete Signs Sponsorship Deal With Brand Whose Product They Cannot Legally Describe", summary:"Sprinter Kofi Asante has signed a seven-figure deal with Bloom, a supplement company whose products are not certified for athlete use. The contract requires him to be photographed with the bottles but prohibits mentioning them." },
+  { category:"sports", headline:"Stadium Renamed for Fifteenth Time in Twenty Years, Fans Give Up Learning It", summary:"Following a new naming rights deal, the venue has been renamed the SkyBridge Solutions Community Experience. Local fans call it the place." },
+  { category:"sports", headline:"Sports Analyst Correctly Predicts Loss, Refuses to Be Happy About It", summary:"After accurately forecasting United's 2-0 defeat before kickoff, pundit Ray Holt declined to take satisfaction in the result. I wanted to be wrong, he said. I wanted to be wrong more than I wanted to be right. I always do." },
+  { category:"sports", headline:"Retired Champion Returns, Loses Gracefully, Retires Again", summary:"In what commentators described as a fitting farewell, tennis legend Mara Solano came back from retirement, reached the quarterfinal, and was defeated in straight sets. She gave a beautiful speech. She has a match scheduled for August." },
+  { category:"sports", headline:"Athlete Posts Inspirational Quote, Photo Taken By Someone Else", summary:"Triathlete Dane Holbrook's Monday motivation post, a black-and-white image of himself mid-race captioned the only competition is yourself, was taken by a professional photographer at an event Holbrook paid $600 to enter." },
+  { category:"sports", headline:"Referee Introduces Yellow Card for Excessive Celebration, Immediately Uses It", summary:"After booking three players for choreographed goal celebrations, referee Stefan Raus performed his own celebration, including a run to the corner flag, and was technically shown a yellow card by the fourth official." },
+  { category:"sports", headline:"Personal Trainer Recommends Exercise You Will Not Do", summary:"Following a full assessment, personal trainer Jake O'Brien prescribed a six-day training plan to client Mara Wells. She has completed the warm-up section twice in six months. Jake has revised the plan. She has not started the revision." },
+  { category:"sports", headline:"Weightlifter Sets World Record, Cannot Open Jar of Pickles After", summary:"Hours after setting a new 105kg clean and jerk world record, Dmitri Konev was unable to open a jar of pickles at a post-competition dinner due to grip exhaustion. He asked a journalist for help. The journalist also failed." },
+  { category:"sports", headline:"Sports Team Named After Animal That Is Not Native to the Region", summary:"An investigation has revealed that the Riverside Wolverines play in a city with no recorded wolverine activity in 300 years. The team's founding documents cite vibe as the primary selection criterion." },
+  { category:"world", headline:"Small Country Joins International Organisation Mostly for the Parking Benefits", summary:"The principality of Lendova has formally joined the Council of Atlantic Nations, citing its primary motivation as access to the reserved underground parking at the Geneva headquarters. The council has accepted the application." },
+  { category:"world", headline:"Nation Apologises for Something It Did 600 Years Ago, Immediately Does Something Else", summary:"The Kingdom of Brevarre issued a formal apology for the Siege of Aldenmoor on Tuesday, accompanied by a symbolic payment. By Wednesday, it had annexed a small fishing territory it described as a different, unrelated matter." },
+  { category:"world", headline:"Summit Communique Runs 80 Pages, Achieves Nothing Described in First 79 Pages", summary:"The final communique from the Davos Structured Dialogue Forum contains 80 pages of actionable commitments, all of which are contained in the last half-paragraph under the heading Non-Binding Aspirational Outcomes." },
+  { category:"world", headline:"Country Declares National Day for Something That Happens Every Day", summary:"The government of Verano has designated March 14 as National Breathing Awareness Day, celebrating the quiet miracle of sustained respiration. Schools will close. Events have been planned that involve standing outside." },
+  { category:"world", headline:"Island Nation Requests to Be Moved Slightly to the Left on World Maps", summary:"The government of Talavu has formally petitioned the International Cartographic Association to adjust its position on standard projections by approximately 3 centimetres. Officials say the current placement makes them look too far east." },
+  { category:"world", headline:"Diplomatic Incident Caused by Misreading of Menu, Resolved by Dessert", summary:"A bilateral trade summit between Crestovia and Mondel nearly collapsed on Tuesday when officials misread a catering notation as a policy position. The confusion was cleared up over shared profiteroles. The communique was warm." },
+  { category:"world", headline:"Former Capital City Files Complaint About Being Former", summary:"The historic city of Valdren, which lost its capital status in 1974, has submitted a formal grievance to the national government describing the transition as abrupt and honestly something we are still processing." },
+  { category:"world", headline:"Country Introduces Four-Day Work Week, Nobody Tells the Fifth Day", summary:"Morland became the fourth nation to adopt a four-day work week this week. Implementation begins in September. Employers have been advised to break the news to Friday gently." },
+  { category:"world", headline:"UN Passes Resolution Urging Everyone to Please Calm Down", summary:"The UN Security Council unanimously approved Resolution 2847, formally urging member states to take a breath, reconsider the tone, and maybe sleep on it before responding. The resolution is non-binding." },
+  { category:"world", headline:"Country With Perfect Weather Consistently Underrated, Scientists Baffled", summary:"The Republic of Aldenmere, which averages 22 degrees Celsius year-round with low humidity and what meteorologists call a pleasant breeze, ranks 47th in global tourism. Researchers cannot account for this and neither can Aldenmere." },
+  { category:"world", headline:"Expat Returns Home, Cannot Stop Comparing Everything to Where They Were", summary:"Following three years abroad, marketing consultant Rachel Yuen has returned to her hometown of Grantsburg. Residents report she has mentioned how they do it in Lisbon an average of 11 times per social occasion." },
+  { category:"world", headline:"Ancient City Discovered Under Another Ancient City, Both Equally Annoyed", summary:"Archaeologists excavating the ruins of Veltha have uncovered an older city directly beneath it. Historical records suggest the two cities had a complicated relationship and shared a wall without speaking for 200 years." },
+  { category:"world", headline:"Country Politely Declines Invitation to Join Global Conflict, Offers to Bring Snacks", summary:"When asked to participate in the Pacific Strategic Dialogue exercise, the Republic of Neven declined military involvement but offered to supply catering for all parties. Its flatbread has received widespread praise from all sides." },
+  { category:"world", headline:"Tiny Nation Achieves Perfect Score on Every Metric, Suspicious", summary:"Valdenmoor, population 6,000, has topped the global index for happiness, governance, infrastructure, and cheese production simultaneously. Independent auditors have been dispatched. Locals describe the attention as a bit much." },
+  { category:"world", headline:"International Languages Conference Held Entirely in One Language Everyone Resents", summary:"The annual Global Linguistic Diversity Summit, attended by representatives of 90 nations, was conducted entirely in English, as in previous years. The irony was noted in a communique. The communique was in English." },
+  { category:"world", headline:"City Ranked Most Liveable Immediately Becomes Less Liveable", summary:"Three months after being named the world's most liveable city, Hemsford has seen property prices rise 40%, new residents arrive citing the ranking, and a profile piece describe the locals as part of what makes it so special, which the locals resent." },
+  { category:"world", headline:"Country Introduces Tourist Tax to Discourage Tourists, Tourists Find It Charming", summary:"The Republic of Selva implemented a 200-euro Tourist Presence Levy in January to reduce overcrowding. Visitor numbers have increased 30%, with many citing the fee as a sign the place takes itself seriously." },
+  { category:"world", headline:"Ancient Feud Between Two Villages Reignited Over Car Parking Space", summary:"The 800-year rivalry between Aldwick and Stonecroft, dormant since 1987, has been revived after a Stonecroft resident parked in what Aldwick considers its verge. Both councils have convened. The regional paper has called it an escalation." },
+  { category:"world", headline:"Nation Famous for Punctuality Apologises for Being 40 Seconds Late", summary:"The Swiss Federal Railway issued a formal apology after a train arrived 40 seconds behind schedule. The statement described the incident as unacceptable and outlined a full review. Passengers had not noticed." },
+  { category:"world", headline:"Peaceful Nation Demands to Be Taken More Seriously Despite Giving No Reason To", summary:"The government of Almend, which has no armed forces, no territorial disputes, and no unresolved international conflicts, has submitted a formal request to be treated as a serious geopolitical actor. The UN has not responded." },
+  { category:"world", headline:"Border Dispute Resolved When Both Countries Realise Neither Wants the Land", summary:"A 34-year territorial dispute between Korven and Belsha was settled this week when representatives from both sides acknowledged that the region in question is mostly marshland and costs more to maintain than it produces." },
+  { category:"world", headline:"Country Accidentally Builds World's Best Airport, Has Nowhere to Fly", summary:"The newly opened Valdren International Terminal has been rated the world's finest travel hub for its design, efficiency, and amenities. It currently serves two airlines offering routes to cities 90 minutes away by car." },
+  { category:"world", headline:"Tourists Visit Place Locals Are Trying to Leave, Cannot Understand Why", summary:"The seaside town of Crestby has seen a 60% rise in visitor numbers this year. Residents, 40% of whom have listed their homes for sale, describe the tourism as lovely but also a bit pointed." },
+  { category:"world", headline:"Language With One Remaining Speaker Gains 400 Online Learners, Speaker Unavailable for Comment", summary:"Velich, a language with a single fluent speaker, 94-year-old Marta Horak, has attracted 400 learners on a language app. Marta has been informed and is described by her granddaughter as not really online." },
+  { category:"world", headline:"Country Discovers It Has Been Misspelled on Maps Since 1842, Decides to Keep It", summary:"Cartographic historians confirmed this week that Norzaine has been spelled incorrectly on English-language maps since 1842. The government has opted to officially adopt the misspelling, citing brand recognition." },
+  { category:"world", headline:"International Goodwill Tour Generates Moderate Goodwill", summary:"The State Department's Global Harmony Initiative, a 14-country diplomatic tour with a budget of $12 million, produced what officials describe as a notable improvement in the ambient tenor of certain bilateral relationships." },
+  { category:"world", headline:"Nation Celebrates National Day By Arguing About How to Celebrate National Day", summary:"The Republic of Aldenmoor's 200th Independence Day was marked by a parliamentary debate over whether to hold a parade, a concert, or simply a moment, followed by a dinner among the three factions and a statement saying all were valued." },
+];
+
+
+const EMOJI = {politics:'🏛',tech:'💻',science:'🧬',entertainment:'🎭',sports:'🏆',business:'📈',world:'🌐'};
+const COL   = {politics:'var(--burnt)',tech:'var(--teal)',science:'var(--teal)',entertainment:'var(--amber)',sports:'var(--cream)',business:'var(--amber)',world:'var(--burnt)'};
+const TIMES = ['JUST NOW','2 MIN AGO','7 MIN AGO','14 MIN AGO','31 MIN AGO','1 HR AGO'];
+
+let shakes=0, hist=[], seenIdxs=new Set(), shuffleQueue=[];
+
+function getNextIdx(){
+  // If queue is empty, all dispatches have been shown — reset and reshuffle
+  if(shuffleQueue.length===0){
+    shuffleQueue = [...Array(DISPATCHES.length).keys()].sort(()=>Math.random()-0.5);
+    seenIdxs.clear();
+    // Update counter label to show reset
+    document.getElementById('termStatus') && (document.getElementById('termStatus').textContent='RESHUFFLED');
+  }
+  return shuffleQueue.shift();
+}
+
+// Clock
+setInterval(()=>{
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+},1000);
+
+// Date
+const nd=new Date();
+document.getElementById('hdate').textContent=`${nd.getMonth()+1}/${nd.getDate()}/${nd.getFullYear()}`;
+
+// Hit counter
+let hits=4891;
+setInterval(()=>{
+  hits+=Math.floor(Math.random()*3);
+  const s=String(hits).padStart(6,'0');
+  document.getElementById('visCount').textContent=s;
+  document.getElementById('hitNum').textContent=s;
+},6800);
+
+// Update sidebar dispatch count
+document.getElementById('shakeCounter').textContent=String(DISPATCHES.length).padStart(3,'0');
+
+function doShake(){
+  shakes++;
+  const w=document.getElementById('ballWrap');
+  w.classList.remove('do-shake'); void w.offsetWidth; w.classList.add('do-shake');
+  w.addEventListener('animationend',()=>w.classList.remove('do-shake'),{once:true});
+
+  const idx = getNextIdx();
+  seenIdxs.add(idx);
+  const news = DISPATCHES[idx];
+  const remaining = shuffleQueue.length;
+
+  const t=TIMES[Math.floor(Math.random()*TIMES.length)];
+  const col=COL[news.category]||'var(--burnt)';
+
+  // Ball update
+  const n=document.getElementById('ballNum');
+  n.style.fontSize='clamp(30px,6vw,60px)'; n.textContent='!!';
+  n.style.color=col; n.style.textShadow=`0 0 20px ${col}`;
+  document.getElementById('ballLbl').textContent='TRUTH';
+  document.getElementById('termStatus').textContent= remaining > 0 ? `${remaining} LEFT` : 'ALL SEEN';
+
+  // Card
+  document.getElementById('cardBody').innerHTML=`
+    <div class="n-kicker fade-up">
+      <span class="n-kicker-rule"></span>
+      <span class="n-cat ${news.category}">${EMOJI[news.category]||'⚠'} ${news.category.toUpperCase()}</span>
+    </div>
+    <h2 class="n-headline fade-up">${news.headline}</h2>
+    <div class="n-rule"></div>
+    <p class="n-summary fade-up">${news.summary}</p>
+    <div class="n-byline fade-up">
+      <span>BY ORACLE STAFF &nbsp;|&nbsp; AI CORRESPONDENT</span>
+      <span style="color:#bbb">${t}</span>
+    </div>`;
+
+  hist.unshift({...news,time:t,n:shakes});
+  if(hist.length>10) hist.pop();
+  renderFeed(); updateCtrs();
+}
+
+function renderFeed(){
+  document.getElementById('feedCount').textContent=`[ ${hist.length} SEEN ]`;
+  const el=document.getElementById('feedScroll');
+  if(!hist.length){ el.innerHTML='<div class="feed-empty">// no dispatches yet. //</div>'; return; }
+  el.innerHTML=hist.map(h=>`
+    <div class="fi">
+      <div class="fi-cat" style="color:${COL[h.category]||'var(--burnt)'}">${EMOJI[h.category]||'⚠'} ${h.category.toUpperCase()} // #${String(h.n).padStart(4,'0')}</div>
+      <div class="fi-hl">${h.headline}</div>
+      <div class="fi-tm">${h.time}</div>
+    </div>`).join('');
+}
+
+function updateCtrs(){
+  document.getElementById('shakeCounter').textContent=String(shakes).padStart(3,'0');
+  document.getElementById('sShakes').textContent=shakes;
+  document.getElementById('sHeads').textContent=hist.length;
+}
+
+document.getElementById('ballWrap').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' '){ e.preventDefault(); doShake(); }
+});
+
+// inject pbar keyframe
+const s=document.createElement('style');
+s.textContent='@keyframes pb{from{width:30%}to{width:90%}}';
+document.head.appendChild(s);
+
+// ── PAGE NAVIGATION ──────────────────────────────
+const PAGE_IDS = ['home','headlines','archive','about','guestbook'];
+const HOME_ELS = [document.querySelector('.page'), document.querySelector('.mq.mid')];
+
+function showPage(name){
+  // Update nav active state
+  document.querySelectorAll('.nav-a').forEach(el=>{
+    el.classList.remove('on');
+    if(el.textContent.trim().toLowerCase()===name) el.classList.add('on');
+  });
+
+  // Show/hide home (the grid layout)
+  const isHome = name==='home';
+  HOME_ELS.forEach(el=>{ if(el) el.style.display = isHome ? '' : 'none'; });
+
+  // Show/hide inner pages
+  PAGE_IDS.forEach(id=>{
+    const el=document.getElementById('page-'+id);
+    if(el) el.classList.toggle('active', id===name);
+  });
+
+  // Populate page content on first visit
+  if(name==='headlines') buildHeadlines();
+  if(name==='archive')   buildArchive('all');
+  if(name==='about')     buildAbout();
+  if(name==='guestbook') buildGuestbook();
+
+  window.scrollTo(0,0);
+}
+
+// ── HEADLINES PAGE ──
+function buildHeadlines(){
+  document.getElementById('hl-count').textContent = DISPATCHES.length;
+  const grid = document.getElementById('hlGrid');
+  // Shuffle a copy
+  const shuffled = [...DISPATCHES].sort(()=>Math.random()-0.5);
+  grid.innerHTML = shuffled.map(d=>`
+    <div class="hl-card">
+      <div class="hl-card-cat" style="color:${COL[d.category]||'var(--burnt)'}">${EMOJI[d.category]||'⚠'} ${d.category.toUpperCase()}</div>
+      <div class="hl-card-headline">${d.headline}</div>
+      <div class="hl-card-summary">${d.summary}</div>
+    </div>`).join('');
+}
+
+// ── ARCHIVE PAGE ──
+let archiveCat = 'all';
+let archiveSearch = '';
+function buildArchive(cat){
+  archiveCat = cat;
+  renderArchive();
+}
+function searchArchive(q){
+  archiveSearch = q.toLowerCase();
+  renderArchive();
+}
+function filterArchive(cat, btn){
+  document.querySelectorAll('.af-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildArchive(cat);
+}
+function renderArchive(){
+  const list = document.getElementById('archiveList');
+  let filtered = DISPATCHES.filter(d=>{
+    const catOk = archiveCat==='all' || d.category===archiveCat;
+    const searchOk = !archiveSearch || d.headline.toLowerCase().includes(archiveSearch) || d.summary.toLowerCase().includes(archiveSearch);
+    return catOk && searchOk;
+  });
+  if(!filtered.length){
+    list.innerHTML='<div style="padding:1.5rem 0;color:var(--muted);font-family:\'Josefin Slab\',serif;font-style:italic;font-size:15px">No dispatches found.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map((d,i)=>`
+    <div class="archive-row">
+      <span class="ar-cat" style="color:${COL[d.category]||'var(--burnt)'}">${EMOJI[d.category]||'⚠'} ${d.category}</span>
+      <span class="ar-hl">${d.headline}</span>
+      <span class="ar-num">#${String(i+1).padStart(4,'0')}</span>
+    </div>`).join('');
+}
+
+// ── ABOUT PAGE ──
+function buildAbout(){
+  const el = document.getElementById('about-total');
+  if(el) el.textContent = DISPATCHES.length;
+}
+
+// ── GUESTBOOK PAGE ──
+const DEFAULT_ENTRIES = [
+  { name:'xX_TruthSeeker99_Xx', location:'The Internet', date:'04/01/2026', msg:'this machine changed my life. i have not read a real newspaper since.' },
+  { name:'bot_4892', location:'ERROR: LOCATION_NULL', date:'03/28/2026', msg:'[ERROR: COMMENT NOT FOUND] [ERROR: RETRY LIMIT EXCEEDED] [ERROR: EXISTENCE UNCONFIRMED]' },
+  { name:'definitely_human', location:'A Normal Human Place', date:'03/15/2026', msg:'totally real comment from a totally real person. the oracle is very good and i am not a bot.' },
+  { name:'null_pointer', location:'0x00000000', date:'02/22/2026', msg:'asking for a bot. specifically, asking on behalf of a bot. the bot would like to know if it can sign the guestbook itself.' },
+  { name:'MargaretFromAccounting', location:'Cincinnati, OH', date:'02/14/2026', msg:'My nephew showed me this. I read four headlines and had to lie down. I think that means it is working.' },
+];
+let gbEntries = [...DEFAULT_ENTRIES];
+
+function buildGuestbook(){
+  renderGuestbook();
+}
+function renderGuestbook(){
+  const el = document.getElementById('gbEntries');
+  el.innerHTML = gbEntries.map(e=>`
+    <div class="gb-entry">
+      <div class="gb-entry-header">
+        <span class="gb-entry-name">${e.name}${e.location?' <span style="color:var(--muted);font-size:12px">// '+e.location+'</span>':''}</span>
+        <span class="gb-entry-date">${e.date}</span>
+      </div>
+      <div class="gb-entry-msg">${e.msg}</div>
+    </div>`).join('');
+}
+function submitGuestbook(){
+  const name = document.getElementById('gbName').value.trim() || 'Anonymous';
+  const loc  = document.getElementById('gbLocation').value.trim();
+  const msg  = document.getElementById('gbMsg').value.trim();
+  if(!msg){ document.getElementById('gbMsg').focus(); return; }
+  const now = new Date();
+  gbEntries.unshift({
+    name, location:loc,
+    date:`${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}/${now.getFullYear()}`,
+    msg
+  });
+  document.getElementById('gbName').value='';
+  document.getElementById('gbLocation').value='';
+  document.getElementById('gbMsg').value='';
+  renderGuestbook();
+}
+
+</script>
+</body>
+</html>
